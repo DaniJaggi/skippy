@@ -31,80 +31,86 @@
     camera.attachControl(canvas, false);
 
 	var hLight = new BABYLON.HemisphericLight("hLight", new BABYLON.Vector3(0, 10, 0), scene);
-	hLight.intensity = 0.1;
-	var dLight = new BABYLON.DirectionalLight("dLight", new BABYLON.Vector3(0,-10,0), scene);
-	dLight.intensity = 0.9;
+	//hLight.intensity = 1;
+	//var dLight = new BABYLON.DirectionalLight("dLight", new BABYLON.Vector3(0,-10,0), scene);
+	//dLight.intensity = 0.9;
 	
-	/*
-    var shadowGenerator = new BABYLON.ShadowGenerator (4096, dLight);
-	//shadowGenerator.useVarianceShadowMap = true;
-	//shadowGenerator.useBlurVarianceShadowMap = true; 
-	shadowGenerator.usePoissonSampling = true;
-	shadowGenerator.bias = 0.0000001;
-*/
     var ground = BABYLON.Mesh.CreateGround("ground", dim.width, dim.length, 0, scene);
     ground.material = new BABYLON.StandardMaterial("ground", scene);
     ground.material.diffuseTexture = new BABYLON.Texture("images/rink.png", scene);
-	ground.receiveShadows = true;
 	
 	var shadow = BABYLON.MeshBuilder.CreatePlane("shadow", {size:1.2}, scene);
 	shadow.material = new BABYLON.StandardMaterial("shadow", scene);
-    if (false) {
-	//shadow.material.emissiveColor = new BABYLON.Color3(0, 1, 0);
-	shadow.material.diffuseTexture = new BABYLON.Texture("images/shadow1_600.png", scene);
-	shadow.material.useAlphaFromDiffuseTexture = true; 
-	}
-	if (true) {
 	shadow.material.opacityTexture = new BABYLON.Texture("images/shadow4_600.png", scene);
 	shadow.material.diffuseColor = new BABYLON.Color3(0, 0, 0);
 	shadow.material.opacityTexture.anisotropicFilteringLevel = 1;
-	}	
 	shadow.material.backFaceCulling = false;
 	shadow.rotation.x = Math.PI/2;
 	shadow.isVisible = false;
+
+	scene.debugLayer.show(true, camera);
 	
 	var redHandle;
 	var yellowHandle;
 	var baseBody;
 	var stones = [];
 	var idCount = 0;
+	var rotationDelta = 0.001;
+	var speedDelta = 0.0005;
 	
 	function Stone(id) {
-		stones[id] = this;
-		
-		var my = this;
-		my.id = id; 
-		my.red = (id % 2)==0;
-		my.position = new BABYLON.Vector3(0,0.001*id,0);
-		
-		//var position = new BABYLON.Vector3(0,0,0);
+		var that = this;
+		that.id = id; 
+		that.red = (id % 2)==0;
+		that.position = new BABYLON.Vector3(0,0.1*id,0);
+		that.visible = false;
+		var rotation = 0;
+		var direction = 0;
+		var speed = 0;
 		
 		var body = baseBody.createInstance("b"+id);
-		body.receiveShadows = true;
-		body.position = my.position;
+		body.position = that.position;
+		body.isVisible = false;
 		
-		var handle = (my.red?redHandle:yellowHandle).createInstance("h"+id);
-		handle.receiveShadows = true;
-		handle.position = my.position;
+		var handle = (that.red?redHandle:yellowHandle).createInstance("h"+id);
+		handle.position = that.position;
+		handle.isVisible = false;
 		
 		var shade = shadow.createInstance("s"+id);
-		shade.isVisible = true;
-		shade.position = my.position;
+		shade.position = that.position;
+		shade.isVisible = false;
 		
-		if (false && shadowGenerator) {
-			shadowGenerator.getShadowMap().renderList.push(body);
-			shadowGenerator.getShadowMap().renderList.push(handle);
+		that.setPosition = function(x,z) {
+			that.position.x = x;
+			that.position.z = z;
+			that.visible = true;
+			handle.isVisible = that.visible;
+			body.isVisible = that.visible;
+			shade.isVisible = that.visible;
 		}
 		
-		my.setPosition = function(x,z) {
-			my.position.x = x;
-			my.position.z = z;
+		that.move = function() {
+			if (!that.visible) return;
+			if (rotation>rotationDelta) {
+				handle.rotation.y += rotation;
+				rotation -= rotationDelta;
+			} else if (rotation<-rotationDelta) {
+				handle.rotation.y += rotation;
+				rotation += rotationDelta;
+			}				
+			if (speed>speedDelta) {
+				that.position.x -= Math.sin(direction)*speed;
+				that.position.z -= Math.cos(direction)*speed;
+				speed -= speedDelta;
+			}
+		}
+				
+		that.push = function(d,s,r) {
+			direction = d;
+			speed = s;
+			rotation = r;
 		}
 		
-		my.rotate = function(a) {
-			handle.rotation.y += a;
-		} 		
-	
 	}
 	
 	function distance(id1,id2) {
@@ -138,37 +144,25 @@
 		redHandle.isVisible = false;
 		
 		for (var i=0;i<16;i++) {
-			var s = new Stone(i);
-			var p = i/16.0;
-			var hh = dim.hack2-dim.hack1;
-			s.setPosition(p*dim.width/2,(dim.length/2-dim.hack1)-hh*p);
-			stones[i] = s;
+			stones[i] = new Stone(i);
 		}
-		stones[0].setPosition(0,dim.tee1-dim.length/2);
-		stones[1].setPosition(-3,dim.tee1-3-dim.length/2);
 		
-		var w = 0;
-		scene.registerBeforeRender(function() {   
-            stones[0].rotate(0.03);
-			stones[1].rotate(-0.01);
-			var y = Math.sin(w)*3+(dim.tee1-dim.length/2);
-			var x = Math.cos(w)*3+0;
-			w -= 0.005;
-			if (w<0) {w=w+Math.PI*2}
-			stones[0].setPosition(x,y);
-			
-			var d = distance(0,1);
-			//console.log("Dist: "+d);
-			if (d<2) {
-				console.log("collision!");
-			}
-			for (var i=3;i<16;i++) {
-			    stones[i].position.z -= 0.1;
+		scene.registerBeforeRender(function() {  
+			for (var i=0;i<16;i++) {
+			    stones[i].move();
 			}
         });
-	
+		startup();
     });
  
     engine.runRenderLoop(function () {
         scene.render();
     });
+	
+	function startup() {
+		stones[0].setPosition(0,dim.tee1-dim.length/2);
+		stones[0].push(-.9,0.04,0.1);
+		
+		stones[1].setPosition(-3,dim.tee1-3-dim.length/2);
+		stones[1].push(0.5,0.03,-0.05);
+	}
