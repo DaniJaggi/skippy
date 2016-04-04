@@ -24,9 +24,11 @@
     var engine = new BABYLON.Engine(canvas, true);
     var scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.4, 0.4, 0.5);
-
+    var actionStone;
     
-    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0,dim.man,6-dim.length/2), scene);
+    var cameraPos = new BABYLON.Vector3(0,dim.man,6-dim.length/2);
+    var camera = new BABYLON.FreeCamera("camera1", cameraPos, scene);
+    //var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", 1, 0.8, 10, cameraPos, scene);
     camera.setTarget(new BABYLON.Vector3(0,0,18-dim.length/2));
     camera.attachControl(canvas, false);
 
@@ -48,7 +50,7 @@
 	shadow.rotation.x = Math.PI/2;
 	shadow.isVisible = false;
 
-	scene.debugLayer.show(true, camera);
+	//scene.debugLayer.show(true, camera);
 	
 	var redHandle;
 	var yellowHandle;
@@ -62,7 +64,7 @@
 		var that = this;
 		that.id = id; 
 		that.red = (id % 2)==0;
-		that.position = new BABYLON.Vector3(0,0.1*id,0);
+		that.position = new BABYLON.Vector3(0,0.2+0.1*id,0);
 		that.visible = false;
 		var rotation = 0;
 		var direction = 0;
@@ -103,6 +105,9 @@
 				that.position.z -= Math.cos(direction)*speed;
 				speed -= speedDelta;
 			}
+            if (that===actionStone) {
+                camera.setTarget(that.position);
+            }
 		}
 				
 		that.push = function(d,s,r) {
@@ -160,9 +165,18 @@
     });
 	
 	function startup() {
-		stones[0].setPosition(0,dim.tee1-dim.length/2);
-		stones[0].push(-.9,0.04,0.1);
+        actionStone = stones[0];
+        
+		stones[0].setPosition(0,dim.tee1+20-dim.length/2);
+		stones[0].push(0,0.14,0.18);
 		
 		stones[1].setPosition(-3,dim.tee1-3-dim.length/2);
 		stones[1].push(0.5,0.03,-0.05);
 	}
+
+    
+    //window.addEventListener("click", function (evt) {
+    //    var pickResult = scene.pick(evt.clientX, evt.clientY);
+    //    console.log("pick-result: "+pickResult);
+    //});
+    
