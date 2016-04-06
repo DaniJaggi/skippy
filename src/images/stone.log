@@ -1,0 +1,33 @@
+	Exporter version: 4.4.2, Blender version: 2.77 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  C:\Users\djaggi\Documents\GitHub\skippy\src\images\
+	Python World class constructor completed
+	processing begun of mesh:  stone
+		processing begun of Standard material:  Granit
+			Diffuse texture found "Granit"
+				Image texture found, type:  diffuseTexture, mapped using: "UVMap"
+	WARNING: Error encountered processing image file:  , Error:  'C:\\Users\\djaggi\\Documents\\GitHub\\skippy\\src\\images\\granit2.png' and 'C:\\Users\\djaggi\\Documents\\GitHub\\skippy\\src\\images\\granit2.png' are the same file
+		num positions      :  6047
+		num normals        :  6047
+		num uvs            :  12094
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36282
+	processing begun of mesh:  handle
+		processing begun of Standard material:  Handle
+		num positions      :  37346
+		num normals        :  37346
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  224064
+	processing begun of camera (FreeCamera):  Camera
+	processing begun of light (POINT):  Lamp
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 2.0104 secs
