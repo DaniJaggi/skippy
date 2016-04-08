@@ -159,12 +159,11 @@
         
 	}
 	
-    var granit = "images/granit.png";
-    //granit = "images/colors.png";
-    
 	BABYLON.SceneLoader.ImportMesh(undefined, "images/", "stone.babylon", scene, function (newMeshes) {
 		prototypeStone = newMeshes[0];
 		
+        //newMeshes[0] = BABYLON.MeshBuilder.CreateBox("box", {height: .5}, scene);
+    
 		var bi = prototypeStone.getBoundingInfo();
 		var diameter = bi.maximum.x - bi.minimum.x;
 		var scale = dim.diameterStone/diameter;	
@@ -172,11 +171,15 @@
         
 		prototypeStone.scaling = new BABYLON.Vector3(scale,scale,scale);
         prototypeStone.material = new BABYLON.StandardMaterial("stone", scene);
-		prototypeStone.material.diffuseTexture = new BABYLON.Texture(granit, scene);
-        prototypeStone.material.diffuseTexture.vScale = 10;
-        prototypeStone.material.diffuseTexture.uScale = 10;
+		prototypeStone.material.diffuseTexture = new BABYLON.Texture("images/stone.png", scene);
+        prototypeStone.material.diffuseTexture.vOffset = -0.05;
+        
+        prototypeStone.material.backFaceCulling = false;
         prototypeStone.isVisible = false;
 	
+
+        //newMeshes[1] = BABYLON.MeshBuilder.CreateBox("box", {height: .5}, scene);
+    
 		prototypeYellowHandle = newMeshes[1];
 		prototypeYellowHandle.scaling = new BABYLON.Vector3(scale,scale,scale);
 		prototypeYellowHandle.material = new BABYLON.StandardMaterial("yellow", scene);
