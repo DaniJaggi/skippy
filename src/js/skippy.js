@@ -3,10 +3,9 @@
 
 console.log("start module");
 
-var scope;
+var app =angular.module('skippy', ['ngMaterial', 'ngMdIcons']);
 
-angular.module('skippy', ['ngMaterial', 'ngMdIcons'])
-.controller('SkipCtrl', function ($scope, $mdSidenav, $timeout) {
+app.controller('ctrl', function ($scope, $mdSidenav, $timeout) {
 	scope = $scope;
 	$scope.toggle = function(navID) {
 		$mdSidenav(navID).toggle();
@@ -16,10 +15,9 @@ angular.module('skippy', ['ngMaterial', 'ngMdIcons'])
 		$mdSidenav(navID).close();
 	}
 	
-	//timeout(function() {
-	//	$scope.loaded = true; 
-	//}, 0);
-	console.log("controller done");
+	this.openMenu = function($mdOpenMenu, ev) {
+		$mdOpenMenu(ev);
+    };
 });
 
 console.log("start babylon");
@@ -299,4 +297,37 @@ function startup() {
 	stones[1].push(Math.PI/2,1.2,0.08);
 	*/
 }
+
+app.directive('weightSelector', ['$document', function($document) {
+  return function(scope, element, attr) {
+    var value = 200;
+    var startY;	
+	var bar = document.createElement('div');
+	bar.className = 'weightBar';
+	bar.style.top = value+'px';
+ 	element.append(bar);
+	
+	element.on('mousedown', function(event) {
+		event.preventDefault();
+		$document.on('mousemove', mousemove);
+		$document.on('mouseup', mouseup);
+		value = event.offsetY;
+		startY = event.pageY;
+		bar.style.top = value+'px';
+    });
+
+    function mousemove(event) {
+		event.preventDefault();
+		value += (event.pageY-startY);
+		startY = event.pageY;
+		console.log("Value: "+value);
+		bar.style.top = value+'px';
+	}
+
+    function mouseup() {
+      $document.off('mousemove', mousemove);
+      $document.off('mouseup', mouseup);
+    }
+  };
+}])
 
