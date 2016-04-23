@@ -1,2 +1,0 @@
-
-.\miniweb.exe -r src

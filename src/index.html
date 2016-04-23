@@ -1,19 +1,86 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
  <head>
-  <title>skippy</title>
-  <meta name="viewport" content="width=device-width, user-scalable=no">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.3.0/babylon.max.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/handjs/1.3.11/hand.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="css/skippy.css">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="css/skippy.css">
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc4/angular-material.min.css">
+  <title>Skippy</title>
  </head>
- <body>
+ <body ng-app="skippy" ng-controller="SkipCtrl" layout="column" >
+  <div class="loading" ng-hide="loaded">
+    <img src="images/spinner.svg"></img>
+  </div>
+   
+  <md-toolbar ng-cloak >
+   <div class="md-toolbar-tools">
+    <md-button aria-label="draw" ng-click="toggle('left')" >
+     <md-icon class="draw-icon" md-svg-src="images/curling_draw.svg"> </md-icon>
+    </md-button>
+    <md-button aria-label="draw" ng-click="toggle('left')" >
+     <md-icon md-svg-src="images/curling_stone.svg"> </md-icon>
+    </md-button>
+    <span flex></span>
+    <div class="sbMain">
+     <div layout="row" flex>
+      <div class="sHeader sHeaderName">TEAM</div>
+      <div class="sHeader sHammer">H</div>
+      <div class="sHeader" layout="column" ng-repeat="e in [1,2,3,4,5,6,7,8,9,10,11]" flex>{{e}}</div>
+      <div class="sHeader sbTotal">TOTAL</div>
+     </div>
+     <div layout="row" flex>
+      <div class="sbCell sbName1">SUI</div>
+      <div class="sbCell sHammer"></div>
+      <div class="sbCell" layout="column" ng-repeat="e in [1,2,3,4,5,6,7,8,9,10,11]" flex>{{}}</div>
+      <div class="sbCell sbTotal">{{}}</div>
+     </div>
+     <div layout="row" flex>
+      <div class="sbCell sbName2">SWE</div>
+      <div class="sbCell sHammer"><md-icon md-svg-src="images/hammer.svg" class="hammer"></md-icon></div>
+      <div class="sbCell" layout="column" ng-repeat="e in [1,2,3,4,5,6,7,8,9,10,11]" flex>{{}}</div>
+      <div class="sbCell sbTotal">{{}}</div>
+     </div>
+    </div>
+    <span flex></span>
+    <md-button class="md-icon-button" aria-label="Settings" ng-disabled="true">
+     <ng-md-icon icon="settings" aria-label="settings" ng-click="toggle('right')" ></ng-md-icon>
+    </md-button>
+   </div>
+  </md-toolbar>
+ 
+  <md-content layout-padding>
     <canvas id="renderCanvas"></canvas>
-    <script src="js/skippy.js"></script>
-    <script>
-    
-    
-    </script>
+
+
+  
+   <md-sidenav ng-cloak lass="md-sidenav-left" md-component-id="left" md-whiteframe="4">
+    <div class="draw-weight">
+     <img src="images/draw_area.svg"></img>
+     <md-slider ng-model="weightSelector" min="0" max="1000" aria-label="weight" md-vertical></md-slider>
+    </div>
+   </md-sidenav>
+   
+   <md-sidenav ng-cloak class="md-sidenav-right" md-component-id="right" md-whiteframe="4">
+    <md-toolbar class="md-theme-indigo">
+     <h1 class="md-toolbar-tools">Right</h1>
+    </md-toolbar>
+    <md-button ng-click="close('right')" class="md-primary">Close</md-button>
+   </md-sidenav> 
+   
+  </md-content> 
+ 
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-aria.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc4/angular-material.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.0/angular-material-icons.min.js"></script> 
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.3.0/babylon.max.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/handjs/1.3.11/hand.min.js"></script>
+  <script src="js/skippy.js"></script>
  </body>
 </html>
 

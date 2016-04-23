@@ -1,13 +1,148 @@
  
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+	display: none !important;
+}
+
 html, body {
     width: 100%;
     height: 100%;
     padding: 0;
     margin: 0;
     overflow: hidden;
+	font-family: "Segoe UI", Arial, sans-serif
+}
+
+@keyframes rotate360 {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes rotate360 {
+	from { -webkit-transform: rotate(0deg); }
+	to { -webkit-transform: rotate(360deg); }
+}
+
+.loading {
+    position: absolute;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+	display: flex;
+    align-items: center;
+    justify-content: center;
+	background-color: white;
+}
+	
+.spinner {
+		
+}
+
+.loading img {
+	width: 100px;
+	height: 100px;
+	animation: rotate360 5s linear infinite;
+	-webkit-animation: rotate360 5s linear infinite;
+
 }
 
 #renderCanvas {
     width: 100%;
     height: 100%;
+    padding: 0 !important;
 }
+
+
+md-content {
+    position: relative;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.sbMain {
+	
+}
+
+.sbCell {
+    width: 20px;
+    height: 16px;
+    border: solid 1px #444;
+    background-color: white;
+    color: #111;
+    font: bold 10px sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+div.sbName1 {
+    width: 60px;
+    background-color: #f22;
+    color: white;
+}
+
+div.sbName2 {
+    width: 60px;
+    background-color: #ff2;
+    color: black;
+}
+  
+div.sbTotal {
+    width: 40px;
+}
+
+.sHeader {
+    width: 20px;
+    height: 10px;
+	border: solid 1px #444;
+    background-color: #555;
+    color: white;
+    font: normal 7px sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sHeaderName {
+   width: 60px;
+}
+
+.hammer {
+    padding: 0;
+    width: 12px;
+    height: 12px;
+	min-width: 12px;
+	min-height: 12px;
+}
+
+.md-toolbar-tools {
+    fill: #fff;
+}
+
+md-sidenav {
+    padding: 0 !important;
+}
+ 
+.draw-icon {
+    fill: white;
+    width: 48px;
+    height: 48px;
+}
+
+.draw-weight {
+    display: flex;
+    align-items: stretch;
+    width: 100px;
+    height: 100%;
+}
+
+.draw-weight img {
+    height: 100%;
+}
+
+.draw-weight md-slider {
+    height: 100%;
+}         
