@@ -3,9 +3,11 @@
 
 console.log("start module");
 
+var scope;
+
 angular.module('skippy', ['ngMaterial', 'ngMdIcons'])
 .controller('SkipCtrl', function ($scope, $mdSidenav, $timeout) {
-	
+	scope = $scope;
 	$scope.toggle = function(navID) {
 		$mdSidenav(navID).toggle();
 	}	
@@ -14,9 +16,10 @@ angular.module('skippy', ['ngMaterial', 'ngMdIcons'])
 		$mdSidenav(navID).close();
 	}
 	
-	$timeout(function() {
-		$scope.loaded = true; 
-	}, 0);
+	//timeout(function() {
+	//	$scope.loaded = true; 
+	//}, 0);
+	console.log("controller done");
 });
 
 console.log("start babylon");
@@ -50,7 +53,7 @@ var camera = new BABYLON.FreeCamera("camera1", cameraPos, scene);
 scene.clearColor = new BABYLON.Color3(0.6, 0.6, 0.9);
 
 camera.setTarget(new BABYLON.Vector3(0,0,0));
-camera.attachControl(canvas, false);
+//camera.attachControl(canvas, false);
 //camera.fov = 0.5;
 
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 10, 3), scene);
@@ -218,9 +221,6 @@ assetsManager.addMeshTask("meshtask", "", "images/", "stone.babylon").onSuccess 
 		}
 		lastMove = now;
 	});
-
-	//startup();
-//});
 }
 
 assetsManager.onFinish = function (tasks) {
@@ -234,9 +234,8 @@ assetsManager.onFinish = function (tasks) {
 
 //scene.debugLayer.show(true, camera);
 console.log("start loading");
-
+assetsManager.useDefaultLoadingScreen = false;
 assetsManager.load();
-console.log("after load");
 
 var mouse = new BABYLON.Vector3(0,0,0)
 
@@ -244,15 +243,16 @@ scene.onPointerDown = function(evt) {
 	//mouse.x = scene.pointerX;
 	//mouse.y = scene.pointerY;
 	mouse.down = true;
-	camera.detachControl(canvas);
+	//camera.detachControl(canvas);
 }
 
 scene.onPointerUp = function(evt) {
 	mouse.down = false;
-	camera.attachControl(canvas);
+	//camera.attachControl(canvas);
 }
 
 scene.onPointerMove = function(evt) {
+	return;
 	if (true || mouse.down) {
 		var h = (scene.pointerY/400);
 		cameraPos.y = h*12;
@@ -270,7 +270,10 @@ window.addEventListener("resize", function() {
 });
 
 function startup() {
-	camera.lockedTarget = new BABYLON.Vector3.Zero();
+	//camera.lockedTarget = new BABYLON.Vector3.Zero();
+	console.log("remove splash");
+	var elem = document.getElementById("splash");
+	elem.parentElement.removeChild(elem);
 
 	/* OK */
 	stones[0].setPosition(0,dim.hog2);
