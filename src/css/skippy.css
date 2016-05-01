@@ -124,22 +124,47 @@ div.sbTotal {
    padding-left: 0 !important;
 }
 
-.drawMenuButton {
+.draw-menu-button {
 	padding-left: 0 !important;
 }
 
-.drawMenu {
+.draw-menu {
 	max-height: 500px;
 	padding: 0;
 }
 
-.drawMenu .md-fab {
+.draw-start {
+	xxmargin: 5px;
+	xxborder-radius: 15px;
+	xxborder: solid 2px gray;
+	background-color: rgb(63, 81, 181);
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	height: 100px;
+}
+
+
+.draw-start .start-icon {
+	display:block;
+	text-align: center;
+	width: 48px;
+	height: 36px;
 	fill: white;
-	background-color: red;
 }
 
 .handle-icon img {
 	height: 48px !important;
+	xxborder-radius: 15px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color:white;
+}
+
+.handle-icon {
+	xxborder-radius:15px !important;
+	background-color: white;
 }
 
 .draw-icon {
@@ -151,11 +176,14 @@ div.sbTotal {
 .draw-weight {
     display: flex;
     align-items: stretch;
-    height: 500px;
+	justify-content: center;
+    width: 260px;
+	xxxheight: calc(100% - 100px);
 }
 
 .draw-weight img {
-	width: 150px;
+	xxxheight: calc(100% - 100px);
+	width: 260px;
 }
 
 .weightBar {

@@ -7,7 +7,7 @@
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="stylesheet" href="css/skippy.css">
-  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc4/angular-material.min.css">
+  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.0.7/angular-material.min.css">
   <title>skippy</title>
  </head>
  <body ng-app="skippy" ng-controller="ctrl" layout="column" >
@@ -19,21 +19,22 @@
   <md-toolbar>
    <div class="md-toolbar-tools">
  	<md-menu md-offset="-8 48">
-     <md-button class="drawMenuButton" aria-label="draw" ng-click="$mdOpenMenu($event)" >
+     <md-button class="draw-menu-button" aria-label="draw" ng-click="$mdOpenMenu($event)" >
       <md-icon class="draw-icon" md-svg-src="images/curling_draw.svg"> </md-icon>
      </md-button>
-	 <md-menu-content class="drawMenu">
-      <div class="draw-weight" weight-selector>
-       <img src="images/draw_area.svg"></img>
-      </div>
-	  <div>
-	   <md-button class="handle-icon" aria-label="?" >
+	 <md-menu-content class="draw-menu">
+	  <div class="draw-start md-raised">
+	   <md-icon class="start-icon" md-svg-src="images/curling_stone_moving.svg"> </md-icon>
+       <md-button class="handle-icon md-raised" aria-label="?" >
         <img src="images/curl_right.svg"></img>
        </md-button>
-	   <md-button class="handle-icon" aria-label="?" >
+	   <md-button class="handle-icon md-raised" aria-label="?" >
         <img src="images/curl_left.svg"></img>
        </md-button>
 	  </div>
+      <div class="draw-weight" weight-selector>
+       <img src="images/draw_area2.svg"></img>
+      </div>
 	 </md-menu-content>
 	</md-menu>
     
@@ -81,7 +82,7 @@
   <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-aria.min.js"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
-  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0-rc4/angular-material.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.0.7/angular-material.min.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.0/angular-material-icons.min.js"></script> 
   <script src="http://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.3.0/babylon.max.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/handjs/1.3.11/hand.min.js"></script>
