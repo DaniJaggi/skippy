@@ -120,8 +120,8 @@ div.sbTotal {
 }
 
 .md-toolbar-tools {
-   fill: #fff;
-   padding-left: 0 !important;
+	fill: #fff;
+	padding-left: 0 !important;
 }
 
 .draw-menu-button {
@@ -129,64 +129,31 @@ div.sbTotal {
 }
 
 .draw-menu {
-	max-height: 500px;
+	max-height: 100%;
 	padding: 0;
 }
 
-.draw-start {
-	xxmargin: 5px;
-	xxborder-radius: 15px;
-	xxborder: solid 2px gray;
-	background-color: rgb(63, 81, 181);
-	position: absolute;
-	bottom: 0px;
-	left: 0px;
-	height: 100px;
-}
-
-
-.draw-start .start-icon {
-	display:block;
-	text-align: center;
-	width: 48px;
-	height: 36px;
-	fill: white;
-}
-
-.handle-icon img {
-	height: 48px !important;
-	xxborder-radius: 15px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background-color:white;
-}
-
-.handle-icon {
-	xxborder-radius:15px !important;
-	background-color: white;
-}
-
-.draw-icon {
-    fill: white;
-    width: 48px;
-    height: 48px;
-}
-
 .draw-weight {
-    display: flex;
-    align-items: stretch;
-	justify-content: center;
-    width: 260px;
-	xxxheight: calc(100% - 100px);
+    background-image: url(../images/draw_area.svg);
+    background-size: cover;
+    height: 250px;
+    width: 120px;
+    padding: 0; 
+    padding-bottom: 100%;
 }
 
-.draw-weight img {
-	xxxheight: calc(100% - 100px);
-	width: 260px;
+.draw-menu button {
+    margin: 0;
+    border-radius: 0;
+}
+    
+.draw-menu md-icon {
+	width: 56px;
+    height: 48px;
+    fill: white;
 }
 
-.weightBar {
+.draw-menu .weightBar {
 	height: 10px;
 	width: 100%;
 	position: absolute;
@@ -197,4 +164,10 @@ div.sbTotal {
 	-moz-filter: blur(5px);
 	-o-filter: blur(5px);
 	-ms-filter: blur(5px);
+}
+
+.draw-icon {
+	fill: white;
+	width: 48px;
+	height: 48px;
 }

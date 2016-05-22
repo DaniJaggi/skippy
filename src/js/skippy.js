@@ -51,7 +51,7 @@ var camera = new BABYLON.FreeCamera("camera1", cameraPos, scene);
 scene.clearColor = new BABYLON.Color3(0.6, 0.6, 0.9);
 
 camera.setTarget(new BABYLON.Vector3(0,0,0));
-//camera.attachControl(canvas, false);
+camera.attachControl(canvas, false);
 //camera.fov = 0.5;
 
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 10, 3), scene);
@@ -74,6 +74,47 @@ shadow.isVisible = false;
 assetsManager.addTextureTask("", "images/shadow.png").onSuccess = function(task) {
     shadow.material.opacityTexture = task.texture;
 	shadow.material.opacityTexture.anisotropicFilteringLevel = 1;
+}
+
+assetsManager.addMeshTask("meshtask", "", "images/", "stone.babylon").onSuccess = function (task) {
+	prototypeStone = task.loadedMeshes[0];
+	
+	var bi = prototypeStone.getBoundingInfo();
+	var diameter = bi.maximum.x - bi.minimum.x;
+	var scale = dim.diameterStone/diameter;	
+	
+	prototypeStone.scaling = new BABYLON.Vector3(scale,scale,scale);
+	prototypeStone.material = new BABYLON.StandardMaterial("stone", scene);
+	prototypeStone.material.diffuseTexture = new BABYLON.Texture("images/stone.png", scene);
+	prototypeStone.material.backFaceCulling = false;
+	prototypeStone.isVisible = false;
+
+	prototypeYellowHandle = task.loadedMeshes[1];
+	prototypeYellowHandle.scaling = new BABYLON.Vector3(scale,scale,scale);
+	prototypeYellowHandle.material = new BABYLON.StandardMaterial("yellow", scene);
+	prototypeYellowHandle.material.diffuseColor = new BABYLON.Color3(1, 1, 0);
+	prototypeYellowHandle.isVisible = false;
+
+	prototypeRedHandle = task.loadedMeshes[1].clone("prototypeRedHandle");
+	prototypeRedHandle.material = new BABYLON.StandardMaterial("red", scene);
+	prototypeRedHandle.material.diffuseColor = new BABYLON.Color3(1, 0, 0);
+	prototypeRedHandle.isVisible = false;
+	
+	for (var i=0;i<16;i++) {
+		stones[i] = new Stone(i);
+	}
+	
+	var lastMove = BABYLON.Tools.Now;
+	scene.registerBeforeRender(function() {	 
+		animate();
+		
+		var now = BABYLON.Tools.Now;
+		var sec = (now-lastMove)/1000.0;
+		for (var i=0;i<16;i++) {
+			stones[i].move(sec);
+		}
+		lastMove = now;
+	});
 }
 
 
@@ -182,47 +223,93 @@ function Stone(id) {
 	
 }
 
-assetsManager.addMeshTask("meshtask", "", "images/", "stone.babylon").onSuccess = function (task) {
-	prototypeStone = task.loadedMeshes[0];
-	
-	var bi = prototypeStone.getBoundingInfo();
-	var diameter = bi.maximum.x - bi.minimum.x;
-	var scale = dim.diameterStone/diameter;	
-	
-	prototypeStone.scaling = new BABYLON.Vector3(scale,scale,scale);
-	prototypeStone.material = new BABYLON.StandardMaterial("stone", scene);
-	prototypeStone.material.diffuseTexture = new BABYLON.Texture("images/stone.png", scene);
-	prototypeStone.material.backFaceCulling = false;
-	prototypeStone.isVisible = false;
 
-	prototypeYellowHandle = task.loadedMeshes[1];
-	prototypeYellowHandle.scaling = new BABYLON.Vector3(scale,scale,scale);
-	prototypeYellowHandle.material = new BABYLON.StandardMaterial("yellow", scene);
-	prototypeYellowHandle.material.diffuseColor = new BABYLON.Color3(1, 1, 0);
-	prototypeYellowHandle.isVisible = false;
+function ease(t) {  return 1-(--t)*t*t*t };
 
-	prototypeRedHandle = task.loadedMeshes[1].clone("prototypeRedHandle");
-	prototypeRedHandle.material = new BABYLON.StandardMaterial("red", scene);
-	prototypeRedHandle.material.diffuseColor = new BABYLON.Color3(1, 0, 0);
-	prototypeRedHandle.isVisible = false;
-	
-	for (var i=0;i<16;i++) {
-		stones[i] = new Stone(i);
+function move(pos,x,z,millis) {
+	var move = pos.move;
+	if (!move) {
+		move = { pos: pos };
+		moves.push(move);
+		pos.move = move;
 	}
-	
-	var lastMove = BABYLON.Tools.Now;
-	scene.registerBeforeRender(function() {	 
-		var now = BABYLON.Tools.Now;
-		var sec = (now-lastMove)/1000.0;
-		for (var i=0;i<16;i++) {
-			stones[i].move(sec);
+	move.start =  BABYLON.Tools.Now;
+	move.sx = pos.x;
+	move.sz = pos.z;
+	move.tx = x;
+	move.tz = z;
+	move.millis = millis || 1000;
+}
+
+var moves = [];
+
+function animate() {
+	var i = moves.length;
+	while (i--) {
+		var move = moves[i];
+		var duration = BABYLON.Tools.Now-move.start;
+		var progress = duration / move.millis;
+		if (progress>=1) {
+			// done
+			move.pos.x = move.tx;
+			move.pos.z = move.tz;
+			moves.splice(i,1);
+			move.pos.move = undefined;
+		} else {
+			progress = ease(progress);
+			move.pos.x = move.sx + progress*(move.tx-move.sx);
+			move.pos.z = move.sz + progress*(move.tz-move.sz);
 		}
-		lastMove = now;
-	});
+	}
+}
+
+var targetPos = new BABYLON.Vector3(-4,0,dim.tee2);
+var targetLeft;
+var targetRight;
+var targetBroom;
+
+assetsManager.addMeshTask("meshtask", "", "images/", "target.babylon").onSuccess = function(task) {
+	targetLeft = task.loadedMeshes[0];
+	targetRight = task.loadedMeshes[1];
+	targetBroom = task.loadedMeshes[2];
+	
+	targetRight.material = new BABYLON.StandardMaterial("targetRight", scene);
+	targetRight.material.diffuseColor = new BABYLON.Color3(0.7, 1, 0.7);
+	targetRight.material.backFaceCulling = false;
+	
+	targetLeft.material = new BABYLON.StandardMaterial("targetLeft", scene);
+	targetLeft.material.diffuseColor = new BABYLON.Color3(0.7, 1, 0.7);
+	targetLeft.material.backFaceCulling = false;
+	
+	targetBroom.material = new BABYLON.StandardMaterial("targetBroom", scene);
+	targetBroom.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1);
+	targetBroom.material.backFaceCulling = false;
+  
+	targetBroom.position = targetPos;
+	targetLeft.position = targetPos;
+	targetRight.position = targetPos;
+    
+	var scale = 0.04;
+	targetBroom.scaling = new BABYLON.Vector3(scale,scale,-scale);
+	targetLeft.scaling = new BABYLON.Vector3(scale,scale,-scale);
+	targetRight.scaling = new BABYLON.Vector3(scale,scale,-scale);
+    
+	selectHandle(targetLeft,targetRight);	
+};
+
+function selectHandle(on,off) {
+	on.material.diffuseColor = new BABYLON.Color3(1, 0.78125, 0.69141);
+	on.visibility = 1;
+	off.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+	off.visibility = 0.3;
 }
 
 assetsManager.onFinish = function (tasks) {
 	console.log("on-finish");
+
+	// remove splash 
+	var splash = document.getElementById("splash");
+	splash.parentElement.removeChild(splash);
 
 	startup();
     engine.runRenderLoop(function () {
@@ -235,43 +322,23 @@ console.log("start loading");
 assetsManager.useDefaultLoadingScreen = false;
 assetsManager.load();
 
-var mouse = new BABYLON.Vector3(0,0,0)
-
-scene.onPointerDown = function(evt) {
-	//mouse.x = scene.pointerX;
-	//mouse.y = scene.pointerY;
-	mouse.down = true;
-	//camera.detachControl(canvas);
-}
-
-scene.onPointerUp = function(evt) {
-	mouse.down = false;
-	//camera.attachControl(canvas);
-}
-
-scene.onPointerMove = function(evt) {
-	return;
-	if (true || mouse.down) {
-		var h = (scene.pointerY/400);
-		cameraPos.y = h*12;
-		
-		if (cameraPos.y>6) {
-			camera.lockedTarget = new BABYLON.Vector3(0,-10,dim.tee2);
-		} else {
-			camera.lockedTarget = new BABYLON.Vector3.Zero();
-		}
-	}
-}
-
 window.addEventListener("resize", function() {
 	engine.resize();
 });
 
+window.addEventListener("click", function (evt) {
+	var pickResult = scene.pick(evt.clientX, evt.clientY);
+	if (pickResult.pickedMesh==targetRight) {
+		selectHandle(targetRight,targetLeft);
+	} else if (pickResult.pickedMesh==targetLeft) {
+		selectHandle(targetLeft,targetRight);
+	} else if (pickResult.pickedMesh==ground) {
+		move(targetPos,pickResult.pickedPoint.x,pickResult.pickedPoint.z,800);
+	}
+});
+
 function startup() {
 	//camera.lockedTarget = new BABYLON.Vector3.Zero();
-	console.log("remove splash");
-	var elem = document.getElementById("splash");
-	elem.parentElement.removeChild(elem);
 
 	/* OK */
 	stones[0].setPosition(0,dim.hog2);
@@ -299,35 +366,42 @@ function startup() {
 }
 
 app.directive('weightSelector', ['$document', function($document) {
-  return function(scope, element, attr) {
-    var value = 200;
-    var startY;	
-	var bar = document.createElement('div');
-	bar.className = 'weightBar';
-	bar.style.top = value+'px';
- 	element.append(bar);
-	
-	element.on('mousedown', function(event) {
-		event.preventDefault();
-		$document.on('mousemove', mousemove);
-		$document.on('mouseup', mouseup);
-		value = event.offsetY;
-		startY = event.pageY;
+	return function(scope, element, attr) {
+		var value = 200;
+		var startY;       
+		var bar = document.createElement('div');
+		bar.className = 'weightBar';
 		bar.style.top = value+'px';
-    });
+		element.append(bar);
+		var maxValue;
+		
+		element.on('mousedown', function(event) {
+			event.preventDefault();
+			$document.on('mousemove', mousemove);
+			$document.on('mouseup', mouseup);
+			maxValue = bar.parentElement.scrollHeight-bar.scrollHeight;
+			startY = event.pageY;
+			if (event.target!=bar) {
+				value = event.offsetY;
+			}
+			bar.style.top = value+'px';
+		});
 
-    function mousemove(event) {
-		event.preventDefault();
-		value += (event.pageY-startY);
-		startY = event.pageY;
-		console.log("Value: "+value);
-		bar.style.top = value+'px';
-	}
+		function mousemove(event) {
+			event.preventDefault();
+			var tmp = value + event.pageY - startY;
+			startY = event.pageY;
+			if (tmp>=0 && tmp<=maxValue) {
+				value = tmp;
+				bar.style.top = value+'px';
+			}
+		}
 
-    function mouseup() {
-      $document.off('mousemove', mousemove);
-      $document.off('mouseup', mouseup);
-    }
-  };
+		function mouseup() {
+			$document.off('mousemove', mousemove);
+			$document.off('mouseup', mouseup);
+			console.log("Value: "+value+"  -> "+(value/maxValue));
+		}
+	};
 }])
 

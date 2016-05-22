@@ -18,25 +18,17 @@
    
   <md-toolbar>
    <div class="md-toolbar-tools">
- 	<md-menu md-offset="-8 48">
+    <md-menu md-offset="-8 48">
      <md-button class="draw-menu-button" aria-label="draw" ng-click="$mdOpenMenu($event)" >
       <md-icon class="draw-icon" md-svg-src="images/curling_draw.svg"> </md-icon>
      </md-button>
-	 <md-menu-content class="draw-menu">
-	  <div class="draw-start md-raised">
-	   <md-icon class="start-icon" md-svg-src="images/curling_stone_moving.svg"> </md-icon>
-       <md-button class="handle-icon md-raised" aria-label="?" >
-        <img src="images/curl_right.svg"></img>
-       </md-button>
-	   <md-button class="handle-icon md-raised" aria-label="?" >
-        <img src="images/curl_left.svg"></img>
-       </md-button>
-	  </div>
-      <div class="draw-weight" weight-selector>
-       <img src="images/draw_area2.svg"></img>
-      </div>
-	 </md-menu-content>
-	</md-menu>
+     <md-menu-content class="draw-menu">
+      <div class="draw-weight" weight-selector></div>
+      <md-button class="md-primary md-raised" aria-label="?" >
+       <md-icon md-svg-src="images/curling_stone_moving.svg"> </md-icon>
+      </md-button>
+     </md-menu-content>
+    </md-menu>
     
     <span flex></span>
     <div class="sbMain">

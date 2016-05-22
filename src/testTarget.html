@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+   <style>
+    html, body, div, canvas {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+  <title>H</title>
+ </head>
+ <body>
+  <canvas id="canvas"></canvas>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/handjs/1.3.11/hand.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.3.0/babylon.max.js"></script>
+  <script>
+
+  
+    //function ease(t) { return t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t };
+    function ease(t) {  return 1-(--t)*t*t*t };
+    
+    function move(pos,x,z,millis) {
+        var move = pos.move;
+        if (!move) {
+            move = { pos: pos };
+            moves.push(move);
+            pos.move = move;
+        }
+        move.start =  BABYLON.Tools.Now;
+        move.sx = pos.x;
+        move.sz = pos.z;
+        move.tx = x;
+        move.tz = z;
+        move.millis = millis || 1000;
+    }
+  
+    var moves = [];
+    
+    function animate() {
+        var i = moves.length;
+        while (i--) {
+		    var move = moves[i];
+            var duration = BABYLON.Tools.Now-move.start;
+            var progress = duration / move.millis;
+            if (progress>=1) {
+                // done
+                move.pos.x = move.tx;
+                move.pos.z = move.tz;
+                moves.splice(i,1);
+                move.pos.move = undefined;
+            } else {
+                progress = ease(progress);
+                move.pos.x = move.sx + progress*(move.tx-move.sx);
+                move.pos.z = move.sz + progress*(move.tz-move.sz);
+            }
+        }
+    }
+        
+    var canvas;
+    var engine;
+    var scene;
+    var light;
+	var camera;
+    var ground;
+    var assetsManager;
+    var rh, lh, broom;
+    var broomPos = new BABYLON.Vector3(0,0,0);
+    var targetPos;
+    
+  
+window.onload = function() {
+    canvas = document.getElementById("canvas");
+    engine = new BABYLON.Engine(canvas, true);
+    scene = new BABYLON.Scene(engine);
+    light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+	camera = new BABYLON.ArcRotateCamera("camera", -Math.PI/2, Math.PI/2-0.3, 400, new BABYLON.Vector3.Zero(), scene);
+    ground = BABYLON.Mesh.CreateGround("ground", 200, 400, 0, scene);
+
+    ground.material = new BABYLON.StandardMaterial("ground", scene);
+    ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    ground.material.backFaceCulling = false;
+    ground.position = new BABYLON.Vector3(0,0,0);
+
+    assetsManager = new BABYLON.AssetsManager(scene);
+
+    scene.clearColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+
+    light.groundColor = new BABYLON.Color3(0.6, 0.6, 0.6);
+	
+    var xAxis = BABYLON.MeshBuilder.CreateBox("x", { height: 1, width: 100, depth: 1 }, scene);
+    var yAxis = BABYLON.MeshBuilder.CreateBox("y", { height: 100, width: 1, depth: 1 }, scene);
+    var zAxis = BABYLON.MeshBuilder.CreateBox("z", { height: 1, width: 1, depth: 100 }, scene);
+    
+    xAxis.position.x = 50;
+    yAxis.position.y = 50;
+    zAxis.position.z = 50;
+    
+    xAxis.material = new BABYLON.StandardMaterial("x", scene);
+    xAxis.material.diffuseColor = new BABYLON.Color3(1, 0, 0);
+    xAxis.material.backFaceCulling = false;
+
+    yAxis.material = new BABYLON.StandardMaterial("y", scene);
+    yAxis.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+    yAxis.material.backFaceCulling = false;
+
+    zAxis.material = new BABYLON.StandardMaterial("z", scene);
+    zAxis.material.diffuseColor = new BABYLON.Color3(0, 0, 1);
+    zAxis.material.backFaceCulling = false;
+
+
+    assetsManager.addMeshTask("meshtask", "", "images/", "target.babylon").onSuccess = function(task) {
+        lh = task.loadedMeshes[0];
+        rh = task.loadedMeshes[1];
+        broom = task.loadedMeshes[2];
+        
+        rh.material = new BABYLON.StandardMaterial("rh", scene);
+        rh.material.diffuseColor = new BABYLON.Color3(0.7, 1, 0.7);
+        rh.material.backFaceCulling = false;
+        
+        lh.material = new BABYLON.StandardMaterial("lh", scene);
+        lh.material.diffuseColor = new BABYLON.Color3(0.7, 1, 0.7);
+        lh.material.backFaceCulling = false;
+        
+        broom.material = new BABYLON.StandardMaterial("broom", scene);
+        broom.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 1);
+        broom.material.backFaceCulling = false;
+      
+        broom.position = broomPos;
+        lh.position = broomPos;
+        rh.position = broomPos;
+        
+        selectHandle(lh,rh);
+        
+        
+    };
+
+    assetsManager.onFinish = function() {
+        scene.activeCamera.attachControl(canvas);
+        scene.registerBeforeRender(animate);
+	
+        engine.runRenderLoop(function () {
+            scene.render();
+        });
+
+        window.addEventListener("resize", function() {
+            engine.resize();
+        });
+    };
+    
+    assetsManager.onError = function() {
+        console.log("Assets failed");
+    };
+    
+    //scene.debugLayer.show(true, camera);    
+    
+    window.addEventListener("click", function (evt) {
+        var pickResult = scene.pick(evt.clientX, evt.clientY);
+        if (pickResult.pickedMesh==rh) {
+            console.log("RIGHT HAND");
+            selectHandle(rh,lh);
+        } else if (pickResult.pickedMesh==lh) {
+            console.log("LEFT HAND");
+            selectHandle(lh,rh);
+        } else if (pickResult.pickedPoint) {
+            move(broomPos,pickResult.pickedPoint.x,pickResult.pickedPoint.z,500);
+        }
+    });
+    
+    assetsManager.useDefaultLoadingScreen = false;
+    assetsManager.load();
+    
+    function selectHandle(m,o) {
+        m.material.diffuseColor = new BABYLON.Color3(1, 0.78125, 0.69141);
+        o.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+        
+        m.visibility = 1;
+        o.visibility = 0.3;
+        
+    }
+    
+};
+
+  </script>
+ </body>
+</html>
+
