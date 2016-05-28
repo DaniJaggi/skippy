@@ -137,9 +137,12 @@ div.sbTotal {
     background-image: url(../images/draw_area.svg);
     background-size: cover;
     height: 250px;
+    min-height: 250px;
+    max-height: 250px;
     width: 120px;
     padding: 0; 
     padding-bottom: 100%;
+    position: relative;
 }
 
 .draw-menu button {

@@ -14,6 +14,8 @@ app.controller('ctrl', function ($scope, $mdSidenav, $timeout) {
 	$scope.close = function(navID) {
 		$mdSidenav(navID).close();
 	}
+    
+    $scope.draw = draw;
 	
 	this.openMenu = function($mdOpenMenu, ev) {
 		$mdOpenMenu(ev);
@@ -26,44 +28,93 @@ var dim = {
 	diameter12:     12,
 	diameterStone:  1,
 	width:          16,
-	center:         8,
 	length:         150,
+
 	man:            6,
-	offset:         6,
-	hack1:          0,   //6
-	back1:          6,   //12,
-	tee1:           12,  //18,
-	hog1:           33,  //39,
-	hog2:           105, //111,
-	tee2:           126, //132,
-	back2:          132, //138,
-	hack2:          138  //144,
+
+	hackD:          114+12, 
+	hogT:           21,
+	teeT:           0, 
+	backT:          -6, 
 };
 
 var canvas = document.getElementById("renderCanvas");
 var engine = new BABYLON.Engine(canvas, true);
 var scene = new BABYLON.Scene(engine);
-var assetsManager = new BABYLON.AssetsManager(scene);
-var cameraPos = new BABYLON.Vector3(0,dim.man/3,dim.back2);
-var camera = new BABYLON.FreeCamera("camera1", cameraPos, scene);
-//var camera = new BABYLON.StereoscopicFreeCamera("camera1", cameraPos, 0.01, true, scene);
-
 scene.clearColor = new BABYLON.Color3(0.6, 0.6, 0.9);
 
+var cameraPos = new BABYLON.Vector3(0,dim.man,0);
+var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI/2, 1.3, 20, cameraPos, scene);
+
+camera.upperBetaLimit = 1.57;
+camera.lowerRadiusLimit = 2;
 camera.setTarget(new BABYLON.Vector3(0,0,0));
-camera.attachControl(canvas, false);
+camera.attachControl(canvas);
 //camera.fov = 0.5;
+
+var assetsManager = new BABYLON.AssetsManager(scene);
 
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 10, 3), scene);
 
-var ground = BABYLON.Mesh.CreateGround("ground", dim.width, dim.length, 0, scene);
-ground.material = new BABYLON.StandardMaterial("ground", scene);
-ground.position = new BABYLON.Vector3(0,0,dim.length/2-dim.offset);
-
-assetsManager.addTextureTask("", "images/rink.png").onSuccess = function(task) {
-    ground.material.diffuseTexture = task.texture;
+var rinkT = BABYLON.Mesh.CreateGround("rinkT", dim.width, 40, 0, scene);
+rinkT.material = new BABYLON.StandardMaterial("rinkT", scene);
+rinkT.position = new BABYLON.Vector3(0,0,2);
+assetsManager.addTextureTask("", "images/rink1.png").onSuccess = function(task) {
+    rinkT.material.diffuseTexture = task.texture;
 }
-	
+
+var rinkM = BABYLON.Mesh.CreateGround("rinkM", dim.width, 70, 0, scene);
+rinkM.material = new BABYLON.StandardMaterial("rinkM", scene);
+rinkM.position = new BABYLON.Vector3(0,0,57);
+assetsManager.addTextureTask("", "images/rink2.png").onSuccess = function(task) {
+    rinkM.material.diffuseTexture = task.texture;
+}
+
+var rinkD = BABYLON.Mesh.CreateGround("rinkD", dim.width, 40, 0, scene);
+rinkD.material = new BABYLON.StandardMaterial("rinkD", scene);
+rinkD.position = new BABYLON.Vector3(0,0,112);
+assetsManager.addTextureTask("", "images/rink3.png").onSuccess = function(task) {
+    rinkD.material.diffuseTexture = task.texture;
+}
+
+/* For Debugging */
+if (false) {
+    //scene.debugLayer.show(true, camera);
+
+    var axisLen = 6;
+    var axisWeight = 0.05;
+    var xAxis = BABYLON.MeshBuilder.CreateBox("x", { height: axisWeight, width: axisLen, depth: axisWeight }, scene);
+    var yAxis = BABYLON.MeshBuilder.CreateBox("y", { height: axisLen, width: axisWeight, depth: axisWeight }, scene);
+    var zAxis = BABYLON.MeshBuilder.CreateBox("z", { height: axisWeight, width: axisWeight, depth: axisLen }, scene);
+
+    xAxis.position.x = axisLen/2;
+    yAxis.position.y = axisLen/2;
+    zAxis.position.z = axisLen/2;
+
+    xAxis.material = new BABYLON.StandardMaterial("x", scene);
+    xAxis.material.diffuseColor = new BABYLON.Color3(1, 0, 0);
+    xAxis.material.backFaceCulling = false;
+
+    yAxis.material = new BABYLON.StandardMaterial("y", scene);
+    yAxis.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+    yAxis.material.backFaceCulling = false;
+
+    zAxis.material = new BABYLON.StandardMaterial("z", scene);
+    zAxis.material.diffuseColor = new BABYLON.Color3(0, 0, 1);
+    zAxis.material.backFaceCulling = false;
+
+    var cursor = BABYLON.MeshBuilder.CreateSphere("cursor", {diameter: .2}, scene);
+    cursor.position.x = 0;
+    cursor.position.y = 0;
+    cursor.position.z = 0;
+    cursor.material = new BABYLON.StandardMaterial("cursor", scene);
+    cursor.material.diffuseColor = new BABYLON.Color3(1,1,0);
+}
+
+dim.hackD = 21;
+
+/*----------------------------------------*/      
+        
 var shadow = BABYLON.MeshBuilder.CreatePlane("shadow", {size:1.5}, scene);
 shadow.material = new BABYLON.StandardMaterial("shadow", scene);
 shadow.material.diffuseColor = new BABYLON.Color3(0, 0, 0);
@@ -106,9 +157,10 @@ assetsManager.addMeshTask("meshtask", "", "images/", "stone.babylon").onSuccess 
 	
 	var lastMove = BABYLON.Tools.Now;
 	scene.registerBeforeRender(function() {	 
-		animate();
-		
 		var now = BABYLON.Tools.Now;
+
+		processAnimates(now);
+		
 		var sec = (now-lastMove)/1000.0;
 		for (var i=0;i<16;i++) {
 			stones[i].move(sec);
@@ -123,7 +175,7 @@ var prototypeYellowHandle;
 var prototypeStone;
 var stones = [];
 var idCount = 0;
-var rotationDelta = 0.0005;
+var rotationDelta = 0.000005;
 var speedDelta = 0.008;
 var curlDelta = 0;//0.001;
 var rotationTakeover = 0.4;
@@ -223,14 +275,12 @@ function Stone(id) {
 	
 }
 
-
-function ease(t) {  return 1-(--t)*t*t*t };
-
-function move(pos,x,z,millis) {
+function move(pos,x,z,millis,easing) {
+    console.log("move: "+x+"/"+z);
 	var move = pos.move;
 	if (!move) {
 		move = { pos: pos };
-		moves.push(move);
+		animatedMoves.push(move);
 		pos.move = move;
 	}
 	move.start =  BABYLON.Tools.Now;
@@ -239,31 +289,63 @@ function move(pos,x,z,millis) {
 	move.tx = x;
 	move.tz = z;
 	move.millis = millis || 1000;
+    move.ease = easing || ease.quadOut;
 }
 
-var moves = [];
+function hide(mesh,millis,easing) {
+    console.log("hide");
+	var hide = mesh.hide;
+	if (!hide) {
+		hide = { mesh: mesh };
+		animatedHides.push(hide);
+		mesh.hide = hide;
+	}
+	hide.start =  BABYLON.Tools.Now;
+    hide.sv = mesh.visibility;
+	hide.millis = millis || 1000;
+    hide.ease = easing || ease.quadOut;
+}
 
-function animate() {
-	var i = moves.length;
+var animatedMoves = [];
+var animatedHides = [];
+
+function processAnimates(now) {
+	var i = animatedMoves.length;
 	while (i--) {
-		var move = moves[i];
-		var duration = BABYLON.Tools.Now-move.start;
+		var move = animatedMoves[i];
+		var duration = now-move.start;
 		var progress = duration / move.millis;
 		if (progress>=1) {
 			// done
 			move.pos.x = move.tx;
 			move.pos.z = move.tz;
-			moves.splice(i,1);
+			animatedMoves.splice(i,1);
 			move.pos.move = undefined;
 		} else {
-			progress = ease(progress);
+			progress = move.ease(progress);
 			move.pos.x = move.sx + progress*(move.tx-move.sx);
 			move.pos.z = move.sz + progress*(move.tz-move.sz);
 		}
 	}
+    i = animatedHides.length;
+    while (i--) {
+		var hide = animatedHides[i];
+		var duration = now-hide.start;
+		var progress = duration / hide.millis;
+		if (progress>=1) {
+			// done
+			hide.mesh.visibility = 0;
+			hide.mesh.isVisible = false;
+            animatedHides.splice(i,1);
+			hide.hide = undefined;
+		} else {
+            progress = hide.ease(progress);
+			hide.mesh.visibility = hide.sv*(1-progress);
+		}
+	}
 }
 
-var targetPos = new BABYLON.Vector3(-4,0,dim.tee2);
+var targetPos = new BABYLON.Vector3(-4,0,0);
 var targetLeft;
 var targetRight;
 var targetBroom;
@@ -290,9 +372,9 @@ assetsManager.addMeshTask("meshtask", "", "images/", "target.babylon").onSuccess
 	targetRight.position = targetPos;
     
 	var scale = 0.04;
-	targetBroom.scaling = new BABYLON.Vector3(scale,scale,-scale);
-	targetLeft.scaling = new BABYLON.Vector3(scale,scale,-scale);
-	targetRight.scaling = new BABYLON.Vector3(scale,scale,-scale);
+	targetBroom.scaling = new BABYLON.Vector3(scale,scale,scale);
+	targetLeft.scaling = new BABYLON.Vector3(scale,scale,scale);
+	targetRight.scaling = new BABYLON.Vector3(scale,scale,scale);
     
 	selectHandle(targetLeft,targetRight);	
 };
@@ -301,7 +383,9 @@ function selectHandle(on,off) {
 	on.material.diffuseColor = new BABYLON.Color3(1, 0.78125, 0.69141);
 	on.visibility = 1;
 	off.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-	off.visibility = 0.3;
+	off.visibility = 0.2;
+    drawHandle = (on==targetLeft)?-1:1;
+            
 }
 
 assetsManager.onFinish = function (tasks) {
@@ -317,7 +401,6 @@ assetsManager.onFinish = function (tasks) {
     });
 };
 
-//scene.debugLayer.show(true, camera);
 console.log("start loading");
 assetsManager.useDefaultLoadingScreen = false;
 assetsManager.load();
@@ -326,24 +409,76 @@ window.addEventListener("resize", function() {
 	engine.resize();
 });
 
-window.addEventListener("click", function (evt) {
-	var pickResult = scene.pick(evt.clientX, evt.clientY);
-	if (pickResult.pickedMesh==targetRight) {
-		selectHandle(targetRight,targetLeft);
-	} else if (pickResult.pickedMesh==targetLeft) {
-		selectHandle(targetLeft,targetRight);
-	} else if (pickResult.pickedMesh==ground) {
-		move(targetPos,pickResult.pickedPoint.x,pickResult.pickedPoint.z,800);
+
+var pointerMoves = 0;
+
+window.addEventListener("pointerdown", function (evt) {
+    pointerMoves=0;
+});
+window.addEventListener("pointermove", function (evt) {
+    pointerMoves++;
+});
+
+window.addEventListener("pointerup", function (evt) {
+    if (pointerMoves>1) {
+        // end of moving
+        return;
+    }
+
+    // adjust for canvas-coordinates
+    var rect = canvas.getBoundingClientRect();
+    var pickResult = scene.pick(evt.clientX-rect.left, evt.clientY-rect.top);
+    if (pickResult.pickedMesh) {
+        if (cursor) {
+			cursor.position = pickResult.pickedPoint;
+        }
+		if (pickResult.pickedMesh==rinkT) {
+            move(targetPos,pickResult.pickedPoint.x,pickResult.pickedPoint.z,500,ease.backOut);
+			if (pickResult.pickedPoint.x>0) {
+				 selectHandle(targetRight,targetLeft);
+			} else {
+				 selectHandle(targetLeft,targetRight);
+			}
+        } else if (pickResult.pickedMesh==targetRight) {
+            selectHandle(targetRight,targetLeft);
+        } else if (pickResult.pickedMesh==targetLeft) {
+            selectHandle(targetLeft,targetRight);
+        } 
 	}
 });
 
+
+var drawHandle = 0;
+var drawLength = .5;
+var currentStoneId = 0;
+
+function draw() {
+    var direction = Math.PI-Math.atan(targetPos.x/(dim.hackD-targetPos.z));
+    var speed = interpolate(drawLength,skills.speedmap);
+    var rotation = skills.rotation*drawHandle;
+	
+    direction = gauss(skills.deviate.direction,direction);
+    speed = gauss(skills.deviate.speed,speed);
+    rotation = gauss(skills.deviate.rotation,rotation);
+    
+    console.log("DRAW: handle="+drawHandle+" len="+drawLength+" ->  dir="+direction+" speed="+speed+" rotation="+rotation);
+
+    stones[0].push(direction,speed,rotation);
+    
+    hide(targetLeft,200,ease.outCubic);
+    hide(targetRight,200,ease.outCubic);
+    hide(targetBroom,200,ease.outCubic);
+}    
+
 function startup() {
-	//camera.lockedTarget = new BABYLON.Vector3.Zero();
+	//camera.lockedTarget = targetPos;
+    //camera.setTarget(targetPos);
 
 	/* OK */
-	stones[0].setPosition(0,dim.hog2);
-	stones[0].push(0/*dir*/,3.5/*fps*/,0.28);
-	stones[1].setPosition(-0.5,dim.tee2);
+	stones[0].setPosition(0,dim.hackD);
+	stones[1].setPosition(0,dim.teeT);
+   // stones[2].setPosition(-0.5,dim.hogT);
+	//stones[2].push(Math.PI/*dir*/,3.0/*fps*/,0.1);
 	
 	/* WRONG 
 	stones[0].setPosition(2,dim.tee2);
@@ -364,18 +499,112 @@ function startup() {
 	stones[1].push(Math.PI/2,1.2,0.08);
 	*/
 }
+var skills = {
+    deviate: {
+        direction:   0.001,
+        speed:       0.01,
+        rotation:    0.0001,
+    },
+    rotation:           0.1,
+    speedmap: [5.0, 5.5, 11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 15.0, 27.0],
+}
+
+function gauss(deviation,mean) {
+	var q = 2;
+	while (q == 0 || q>1) {
+		u1 = 2 * Math.random() - 1;
+		u2 = 2 * Math.random() - 1;
+		q = u1 * u1 + u2 * u2;
+	}
+	q = Math.sqrt((-2 * Math.log(q)) / q);
+	return (deviation * u1 * q)+mean;
+}
+
+function interpolate(ratio,map) {
+    if (ratio>=1) {
+        return map[map.length-1];
+    } else if (ratio<=0) {
+        return map[0];
+    }
+    var offset = (map.length-1)*ratio;
+    var index = Math.floor(offset);
+    var v1 = map[index];
+    var step = 1/(map.length-1);
+    var delta = (ratio-(index*step))/step;
+    var v2 = (map[index+1]-map[index])*delta;
+    return v1+v2;
+}
+
+
+var ease = {
+    linear: function (t) { return t },
+    quadIn: function (t) { return t*t },
+    quadOut: function (t) { return t*(2-t) },
+    quadInOut: function (t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t },
+    quartIn: function (t) { return t*t*t*t },
+    quartOut: function (t) { return 1-(--t)*t*t*t },
+    quartInOut: function (t) { return t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t },
+    quintIn: function (t) { return t*t*t*t*t },
+    quintOut: function (t) { return 1+(--t)*t*t*t*t },
+    quintInOut: function (t) { return t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t },
+    circIn: function (t) { return -1 * (Math.sqrt(1 - t*t) - 1); },
+    circOut: function (t) { return Math.sqrt(1 - (t=t-1)*t); },
+    circInOut: function (t) { if ((t/=1/2) < 1) return -1/2 * (Math.sqrt(1 - t*t) - 1); return 1/2 * (Math.sqrt(1 - (t-=2)*t) + 1); },
+    cubicIn: function (t) { return t*t*t },
+    cubicOut: function (t) { return (--t)*t*t+1 },
+    cubicInOut: function (t) { return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1 },
+    sineIn: function (t) { return 1-Math.cos(t * (Math.PI/2)); },
+    sineOut: function (t) { return Math.sin(t * (Math.PI/2)); },
+    sineInOut: function (t) { return 1/2 * (1-Math.cos(Math.PI*t)); },
+    expoIn: function (t) { return (t==0) ? 0 : Math.pow(2, 10 * (t - 1)); },
+    expoOut: function (t) { return (t==1) ? 1 : 1-Math.pow(2, -10 * t); },
+    expoInOut: function (t) {
+        if (t==0) return 0;
+        if (t==1) return 1;
+        if ((t/=1/2) < 1) return 1/2 * Math.pow(2, 10 * (t - 1));
+        return 1/2 * (-Math.pow(2, -10 * --t) + 2);
+    },
+    elasticIn: function (t) {
+        var s=1.70158;var p=0;var a=1;
+        if (t==0) return 0;  if (t==1) return 1;  if (!p) p=.3;
+        if (a < Math.abs(1)) { a=1; var s=p/4; }
+        else var s = p/(2*Math.PI) * Math.asin (1/a);
+        return -(a*Math.pow(2,10*(t-=1)) * Math.sin( (t-s)*(2*Math.PI)/p ));
+    },
+    elasticOut: function (t) {
+        var s=1.70158;var p=0;var a=1;
+        if (t==0) return 0;  if (t==1) return 1;  if (!p) p=.3;
+        if (a < Math.abs(1)) { a=1; var s=p/4; }
+        else var s = p/(2*Math.PI) * Math.asin (1/a);
+        return a*Math.pow(2,-10*t) * Math.sin( (t-s)*(2*Math.PI)/p ) + 1;
+    },
+    elasticInOut: function (t) {
+        var s=1.70158;var p=0;var a=1;
+        if (t==0) return 0;  if ((t/=1/2)==2) return 1;  if (!p) p=1*(.3*1.5);
+        if (a < Math.abs(1)) { a=1; var s=p/4; }
+        else var s = p/(2*Math.PI) * Math.asin (1/a);
+        if (t < 1) return -.5*(a*Math.pow(2,10*(t-=1)) * Math.sin( (t-s)*(2*Math.PI)/p ));
+        return a*Math.pow(2,-10*(t-=1)) * Math.sin( (t-s)*(2*Math.PI)/p )*.5 + 1;
+    },
+    backOut: function (t) {
+        var s = 1.1;//1.70158;
+        t = ( t / 1 ) - 1;
+        return (t*t*((s+1)*t+s)) + 1;
+	},
+}
 
 app.directive('weightSelector', ['$document', function($document) {
 	return function(scope, element, attr) {
-		var value = 200;
-		var startY;       
 		var bar = document.createElement('div');
 		bar.className = 'weightBar';
-		bar.style.top = value+'px';
 		element.append(bar);
-		var maxValue;
-		
-		element.on('mousedown', function(event) {
+        var startY;
+		var maxValue = bar.parentElement.scrollHeight-bar.scrollHeight;
+        var value = maxValue*drawLength;
+        // use percentage because height isn't valid yet
+	    bar.style.top = 'calc('+Math.round(100*drawLength)+'% - '+(bar.scrollHeight/2)+'px)';
+        
+        element.on('mousedown', function(event) {
 			event.preventDefault();
 			$document.on('mousemove', mousemove);
 			$document.on('mouseup', mouseup);
@@ -385,7 +614,7 @@ app.directive('weightSelector', ['$document', function($document) {
 				value = event.offsetY;
 			}
 			bar.style.top = value+'px';
-		});
+    	});
 
 		function mousemove(event) {
 			event.preventDefault();
@@ -395,12 +624,15 @@ app.directive('weightSelector', ['$document', function($document) {
 				value = tmp;
 				bar.style.top = value+'px';
 			}
-		}
+    	}
 
 		function mouseup() {
 			$document.off('mousemove', mousemove);
 			$document.off('mouseup', mouseup);
-			console.log("Value: "+value+"  -> "+(value/maxValue));
+            if (value>=0) {
+                drawLength = value/maxValue;
+                console.log("drawLen: "+drawLength);
+            }
 		}
 	};
 }])
