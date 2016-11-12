@@ -18,8 +18,12 @@
    
   <md-toolbar>
    <div class="md-toolbar-tools">
+   
+    <md-button xclass="draw-menu-button" aria-label="draw" ng-click="testDraw()">T</md-button>
+	<md-button xclass="draw-menu-button" aria-label="draw" ng-click="startup()">R</md-button>
+
     <md-menu md-offset="-8 48">
-     <md-button class="draw-menu-button" aria-label="draw" ng-click="$mdOpenMenu($event)" >
+     <md-button class="draw-menu-button" aria-label="draw" ng-click="draw()" ng-click="$mdOpenMenu($event)" >
       <md-icon class="draw-icon" md-svg-src="images/curling_draw.svg"> </md-icon>
      </md-button>
      <md-menu-content class="draw-menu">

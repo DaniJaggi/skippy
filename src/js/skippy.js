@@ -16,6 +16,8 @@ app.controller('ctrl', function ($scope, $mdSidenav, $timeout) {
 	}
     
     $scope.draw = draw;
+	$scope.testDraw = testDraw;
+	$scope.startup = startup;
 	
 	this.openMenu = function($mdOpenMenu, ev) {
 		$mdOpenMenu(ev);
@@ -54,7 +56,7 @@ camera.attachControl(canvas);
 
 var assetsManager = new BABYLON.AssetsManager(scene);
 
-var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 10, 3), scene);
+var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 100, -100), scene);
 
 var rinkT = BABYLON.Mesh.CreateGround("rinkT", dim.width, 40, 0, scene);
 rinkT.material = new BABYLON.StandardMaterial("rinkT", scene);
@@ -77,10 +79,8 @@ assetsManager.addTextureTask("", "images/rink3.png").onSuccess = function(task) 
     rinkD.material.diffuseTexture = task.texture;
 }
 
-/* For Debugging */
-if (false) {
-    //scene.debugLayer.show(true, camera);
-
+function showAxis() {
+    
     var axisLen = 6;
     var axisWeight = 0.05;
     var xAxis = BABYLON.MeshBuilder.CreateBox("x", { height: axisWeight, width: axisLen, depth: axisWeight }, scene);
@@ -103,7 +103,7 @@ if (false) {
     zAxis.material.diffuseColor = new BABYLON.Color3(0, 0, 1);
     zAxis.material.backFaceCulling = false;
 
-    var cursor = BABYLON.MeshBuilder.CreateSphere("cursor", {diameter: .2}, scene);
+    cursor = BABYLON.MeshBuilder.CreateSphere("cursor", {diameter: .2}, scene);
     cursor.position.x = 0;
     cursor.position.y = 0;
     cursor.position.z = 0;
@@ -111,7 +111,12 @@ if (false) {
     cursor.material.diffuseColor = new BABYLON.Color3(1,1,0);
 }
 
-dim.hackD = 21;
+/* For Debugging */
+var cursor = undefined;
+//scene.debugLayer.show(true, camera);
+//showAxis();
+
+
 
 /*----------------------------------------*/      
         
@@ -128,222 +133,95 @@ assetsManager.addTextureTask("", "images/shadow.png").onSuccess = function(task)
 }
 
 assetsManager.addMeshTask("meshtask", "", "images/", "stone.babylon").onSuccess = function (task) {
-	prototypeStone = task.loadedMeshes[0];
+	var prototypeStone = task.loadedMeshes[0];
 	
 	var bi = prototypeStone.getBoundingInfo();
 	var diameter = bi.maximum.x - bi.minimum.x;
 	var scale = dim.diameterStone/diameter;	
+	var scaling = new BABYLON.Vector3(scale,scale,scale);
 	
-	prototypeStone.scaling = new BABYLON.Vector3(scale,scale,scale);
-	prototypeStone.material = new BABYLON.StandardMaterial("stone", scene);
+    prototypeStone.scaling = scaling;
+    prototypeStone.material = new BABYLON.StandardMaterial("stone", scene);
 	prototypeStone.material.diffuseTexture = new BABYLON.Texture("images/stone.png", scene);
 	prototypeStone.material.backFaceCulling = false;
+	prototypeStone.setEnabled(false);
 	prototypeStone.isVisible = false;
 
-	prototypeYellowHandle = task.loadedMeshes[1];
-	prototypeYellowHandle.scaling = new BABYLON.Vector3(scale,scale,scale);
-	prototypeYellowHandle.material = new BABYLON.StandardMaterial("yellow", scene);
-	prototypeYellowHandle.material.diffuseColor = new BABYLON.Color3(1, 1, 0);
-	prototypeYellowHandle.isVisible = false;
-
-	prototypeRedHandle = task.loadedMeshes[1].clone("prototypeRedHandle");
-	prototypeRedHandle.material = new BABYLON.StandardMaterial("red", scene);
-	prototypeRedHandle.material.diffuseColor = new BABYLON.Color3(1, 0, 0);
-	prototypeRedHandle.isVisible = false;
+	var yellowHandle = task.loadedMeshes[1];
+	yellowHandle.scaling = scaling;
+	yellowHandle.material = new BABYLON.StandardMaterial("yellow", scene);
+	yellowHandle.material.diffuseColor = new BABYLON.Color3(1, 1, 0);
+    yellowHandle.setEnabled(false);
+	yellowHandle.isVisible = false;
 	
+	var redHandle = yellowHandle.clone("redHandle");
+    
+	// http://www.html5gamedevs.com/topic/26312-side-effect-of-createinstance-on-a-clone/
+	redHandle.makeGeometryUnique();
+    
+    redHandle.material = new BABYLON.StandardMaterial("red", scene);
+	redHandle.material.diffuseColor = new BABYLON.Color3(1, 0, 0);
+  
 	for (var i=0;i<16;i++) {
-		stones[i] = new Stone(i);
+        if ((i%2)==0) {
+            new Stone(i,prototypeStone,redHandle,shadow);
+        } else {
+            new Stone(i,prototypeStone,yellowHandle,shadow);
+        }            
 	}
+    
 	
-	var lastMove = BABYLON.Tools.Now;
-	scene.registerBeforeRender(function() {	 
+    // we move in 10ms timesteps
+    scene.registerBeforeRender(function() {	 
 		var now = BABYLON.Tools.Now;
 
-		processAnimates(now);
+		processAnimations(now);
 		
-		var sec = (now-lastMove)/1000.0;
-		for (var i=0;i<16;i++) {
-			stones[i].move(sec);
-		}
-		lastMove = now;
+        var iterations = 0;
+        while (timestep<now) {
+            iterations++;
+            timestep += timestepMillis;
+            for (var i=0;i<stones.length;i++) {
+                stones[i].tick();
+            }
+        }
+        //console.log("executed "+iterations+" timesteps");
 	});
 }
 
 
-var prototypeRedHandle;
-var prototypeYellowHandle;
-var prototypeStone;
-var stones = [];
-var idCount = 0;
-var rotationDelta = 0.000005;
-var speedDelta = 0.008;
-var curlDelta = 0;//0.001;
-var rotationTakeover = 0.4;
+var animations = [];
 
-function Stone(id) {
-	var that = this;
-	that.id = id; 
-	that.red = (id % 2)==0;
-	that.position = new BABYLON.Vector3(0,0.001*(id+1),0);
-	that.visible = false;
-	that.state = { s:0, d:0, r:0 }
-	
-	var body = prototypeStone.createInstance("b"+id);
-	body.position = that.position;
-	body.isVisible = false;
-	
-	var handle = (that.red?prototypeRedHandle:prototypeYellowHandle).createInstance("h"+id);
-	handle.position = that.position;
-	handle.isVisible = false;
-	
-	var shade = shadow.createInstance("s"+id);
-	shade.position = that.position;
-	shade.isVisible = false;
-	
-	that.setPosition = function(x,z) {
-		that.position.x = x;
-		that.position.z = z;
-		that.visible = true;
-		handle.isVisible = that.visible;
-		body.isVisible = that.visible;
-		shade.isVisible = that.visible;
-	}
-	
-	that.move = function(sec) {
-		if (!that.visible) return;
-		
-		if (that.state.r>rotationDelta) {
-			handle.rotation.y += that.state.r;
-			that.state.r -= rotationDelta;
-			that.state.d += curlDelta;
-		} else if (that.state.r<-rotationDelta) {
-			handle.rotation.y += that.state.r;
-			that.state.r += rotationDelta;
-			that.state.d -= curlDelta;
-		}
-		body.rotation.y = handle.rotation.y;
-		if (that.state.s>speedDelta) {
-			that.position.x += Math.sin(that.state.d)*that.state.s*sec;
-			that.position.z += Math.cos(that.state.d)*that.state.s*sec;
-			that.state.s -= speedDelta;
-		}
-		for (var p=id+1;p<16;p++) {
-			var impuls = stones[p].colision(that.position,that.state);
-			if (impuls) {
-				that.state.d = impuls.d;
-				that.state.s = impuls.s;
-				that.state.r = impuls.r; 
-			}
-		}
-	}
-			
-	that.push = function(d,s,r) {
-		that.state.d = d;
-		that.state.s = s;
-		that.state.r = r;
-	}
-	
-	that.colision = function(p,s) {
-		if (!that.visible) return;
-		var dx = that.position.x-p.x;
-		var dz = that.position.z-p.z;
-		var dist = Math.sqrt(dx*dx+dz*dz);
-		if (dist<=1) {
-			var a1 = Math.atan(dx/dz);
-			var a2 = a1-s.d;
-			var ns1 = s.s*Math.sin(a2);
-			var nd1 = a1-Math.PI/2;
-			var nr1 = s.r*(1-rotationTakeover);
-			
-			var ns2 = s.s*Math.cos(a2);
-			var nd2 = a1;
-			var nr2 = 0-s.r*rotationTakeover;
-			
-			that.state.s = ns2;
-			that.state.d = nd2;
-			that.state.r = nr2;
-			
-			console.log("@@ nd1="+nd1+",   ns1="+ns1);
-			return { d:nd1, s:ns1, r:nr1 };
-		}
-	}
-
-	if (id==1) {
-		m = body.material;
-		t = body.material.diffuseTexture;
-	}
-	
-}
-
-function move(pos,x,z,millis,easing) {
-    console.log("move: "+x+"/"+z);
-	var move = pos.move;
-	if (!move) {
-		move = { pos: pos };
-		animatedMoves.push(move);
-		pos.move = move;
-	}
-	move.start =  BABYLON.Tools.Now;
-	move.sx = pos.x;
-	move.sz = pos.z;
-	move.tx = x;
-	move.tz = z;
-	move.millis = millis || 1000;
-    move.ease = easing || ease.quadOut;
-}
-
-function hide(mesh,millis,easing) {
-    console.log("hide");
-	var hide = mesh.hide;
-	if (!hide) {
-		hide = { mesh: mesh };
-		animatedHides.push(hide);
-		mesh.hide = hide;
-	}
-	hide.start =  BABYLON.Tools.Now;
-    hide.sv = mesh.visibility;
-	hide.millis = millis || 1000;
-    hide.ease = easing || ease.quadOut;
-}
-
-var animatedMoves = [];
-var animatedHides = [];
-
-function processAnimates(now) {
-	var i = animatedMoves.length;
-	while (i--) {
-		var move = animatedMoves[i];
-		var duration = now-move.start;
-		var progress = duration / move.millis;
-		if (progress>=1) {
-			// done
-			move.pos.x = move.tx;
-			move.pos.z = move.tz;
-			animatedMoves.splice(i,1);
-			move.pos.move = undefined;
-		} else {
-			progress = move.ease(progress);
-			move.pos.x = move.sx + progress*(move.tx-move.sx);
-			move.pos.z = move.sz + progress*(move.tz-move.sz);
-		}
-	}
-    i = animatedHides.length;
+function processAnimations(now) {
+    var i = animations.length;
     while (i--) {
-		var hide = animatedHides[i];
-		var duration = now-hide.start;
-		var progress = duration / hide.millis;
-		if (progress>=1) {
-			// done
-			hide.mesh.visibility = 0;
-			hide.mesh.isVisible = false;
-            animatedHides.splice(i,1);
-			hide.hide = undefined;
-		} else {
-            progress = hide.ease(progress);
-			hide.mesh.visibility = hide.sv*(1-progress);
-		}
+		var a = animations[i];
+		var duration = now-a.start;
+		a.progress = a.easing(duration / a.millis);
+        a.done = a.progress>=1;
+        a.init = false;
+        a.callback(a);
+        if (a.done) {
+            animations.splice(i,1);
+        }
 	}
 }
+
+function animate(millis,easing,callback) {
+    var animation = {
+        start: BABYLON.Tools.Now,
+        millis: millis,
+        easing: easing,
+        callback: callback,
+        progress: 0,
+        done: false,
+        init: true
+    }
+    callback(animation);
+    animations.push(animation);
+}
+
+
 
 var targetPos = new BABYLON.Vector3(-4,0,0);
 var targetLeft;
@@ -433,8 +311,18 @@ window.addEventListener("pointerup", function (evt) {
 			cursor.position = pickResult.pickedPoint;
         }
 		if (pickResult.pickedMesh==rinkT) {
-            move(targetPos,pickResult.pickedPoint.x,pickResult.pickedPoint.z,500,ease.backOut);
-			if (pickResult.pickedPoint.x>0) {
+            animate(500,ease.backOut,function(a) {
+                if (a.init) {
+                    a.sx = targetPos.x;
+                    a.sz = targetPos.z;
+                    a.tx = pickResult.pickedPoint.x;
+                    a.tz = pickResult.pickedPoint.z;
+                } else {
+                    targetPos.x = a.sx + a.progress*(a.tx-a.sx);
+                    targetPos.z = a.sz + a.progress*(a.tz-a.sz);
+                }
+            });
+            if (pickResult.pickedPoint.x>0) {
 				 selectHandle(targetRight,targetLeft);
 			} else {
 				 selectHandle(targetLeft,targetRight);
@@ -448,36 +336,70 @@ window.addEventListener("pointerup", function (evt) {
 });
 
 
-var drawHandle = 0;
+var drawHandle = 1;
 var drawLength = .5;
 var currentStoneId = 0;
 
+
 function draw() {
-    var direction = Math.PI-Math.atan(targetPos.x/(dim.hackD-targetPos.z));
     var speed = speedmap(drawLength);
+    var direction = Math.PI+Math.atan(-targetPos.x/(dim.hackD-targetPos.z));
     var rotation = skills.rotation*drawHandle;
 	
-    direction = gauss(skills.deviate.direction,direction);
     speed = gauss(skills.deviate.speed,speed);
+    direction = gauss(skills.deviate.direction,direction);
     rotation = gauss(skills.deviate.rotation,rotation);
+    
+    // for testing
+    speed = .06; // feed/timestep
+    direction = Math.PI-Math.atan(-targetPos.x/(stones[currentStoneId].position.z-targetPos.z));
+    //direction = Math.PI;
     
     console.log("DRAW: handle="+drawHandle+" len="+drawLength+" ->  dir="+direction+" speed="+speed+" rotation="+rotation);
 
-    stones[0].push(direction,speed,rotation);
+    stones[currentStoneId].push(speed,direction,rotation);
     
-    hide(targetLeft,200,ease.outCubic);
-    hide(targetRight,200,ease.outCubic);
-    hide(targetBroom,200,ease.outCubic);
+    animate(100,ease.cubicOut,function(a) {
+        if (a.init) {
+            a.tl = targetLeft.visiblity;
+            a.tr = targetRight.visiblity;
+            a.tb = targetBroom.visibility;
+        } else {
+            var v = 1-a.progress;
+            targetLeft.visibility = a.tl*v;
+            targetRight.visibility = a.tr*v;
+            targetBroom.visibility = a.tb*v;
+            if (a.done) {
+                targetLeft.isVisible = false;
+                targetRight.isVisible = false;
+                targetBroom.isVisible = false;
+                targetLeft.visibility = a.tl;
+                targetRight.visibility = a.tr;
+                targetBroom.visibility = a.tb;
+            }
+        }
+    });
 }    
 
 function startup() {
 	//camera.lockedTarget = targetPos;
     //camera.setTarget(targetPos);
-
-	/* OK */
-	stones[0].setPosition(0,dim.hackD);
-	stones[1].setPosition(0,dim.teeT);
-   // stones[2].setPosition(-0.5,dim.hogT);
+	targetLeft.isVisible = true;
+    targetRight.isVisible = true;
+    targetBroom.isVisible = true;
+   
+    
+ 	/* OK */
+    stones[0].setPosition(0,8/*dim.hackD*/);
+	stones[1].setPosition(1.414/2,-1.414/4);
+    
+  //  stones[2].setPosition(-2,-1.5);
+  //  stones[3].setPosition(-4,0);
+  
+    //    stones[2].setPosition(1.1,dim.teeT);
+    //    stones[3].setPosition(0,-3);
+	
+    // stones[2].setPosition(-0.5,dim.hogT);
 	//stones[2].push(Math.PI/*dir*/,3.0/*fps*/,0.1);
 	
 	/* WRONG 
@@ -499,13 +421,44 @@ function startup() {
 	stones[1].push(Math.PI/2,1.2,0.08);
 	*/
 }
+
+
+function testDraw() {
+    startup();
+    
+    targetLeft.isVisible = false;
+    targetRight.isVisible = false;
+    targetBroom.isVisible = false;
+    
+    for (var i=0;i<stones.length;i++) {
+        stones[i].setVisible(false);
+        stones[i].impulse = new Impulse();
+    }
+ 
+    speedDecrement = 0.00001; 
+    
+	/* OK */
+	var x=1;
+    stones[0].setPosition(x*0,8/*dim.hackD*/);
+	stones[1].setPosition(x*1.414/2,-1.414/4);
+    stones[2].setPosition(x*-1.5,-2.5);
+    stones[3].setPosition(x*-4,-1.66);
+    stones[4].setPosition(x*-5,1);
+    stones[5].setPosition(x*-4.5,3);
+    stones[6].setPosition(x*-3,4);
+    stones[7].setPosition(x*1.5,3.5);
+    
+    stones[currentStoneId].push(0.2,Math.PI,skills.rotation);
+    
+}
+    
 var skills = {
     deviate: {
-        direction:   0.001,
-        speed:       0.01,
-        rotation:    0.0001,
+        direction:   0.001,   // angle/timestep
+        speed:       0.01,    // feed/timestep
+        rotation:    0.0001,  // angle/timestep
     },
-    rotation:           0.1,
+    rotation:        0.015,    // angle/timestep 
 }
 
 var speedmap = createSpeedmap([5.0, 5.5, 11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 15.0, 27.0]);
@@ -578,3 +531,270 @@ app.directive('weightSelector', ['$document', function($document) {
 	};
 }])
 
+
+
+var rotationDecrement1 = 0.000005; // angle/timestep
+var rotationDecrement2 = 0.00005; // angle/timestep
+var speedDecrement = 0.00008;  // feed/timestep 
+
+function Impulse(copy) {
+    if (copy) {
+        this.copy(copy);
+    } else {
+        this.reset();
+    }
+}
+
+Impulse.prototype.copy = function(v) {
+    this.s = v.s;
+    this.d = v.d;
+    this.r = v.r;
+    this.x = v.x;
+    this.z = v.z;
+}
+
+Impulse.prototype.reset = function() {
+    this.s = 0;
+    this.d = 0;
+    this.x = 0;
+    this.z = 0;
+    this.r = 0;
+}
+
+Impulse.prototype.updateXZ = function() {
+    this.x = -Math.sin(this.d)*this.s;
+    this.z = Math.cos(this.d)*this.s;
+}
+    
+Impulse.prototype.set = function(s,d,r) {
+    this.s = s || 0;
+    this.d = d || 0;
+    this.r = r || 0;
+    this.updateXZ();
+}
+
+Impulse.prototype.setSpeed = function(s) {
+    this.s = s;
+    this.updateXZ();
+}
+
+Impulse.prototype.mul = function(f) {
+    this.s *= f;
+    this.x *= f;
+    this.z *= f;
+}
+
+Impulse.prototype.dotProduct = function(v) {
+    return this.x*v.x+this.z*v.z;
+}
+    
+Impulse.prototype.add = function(v) {
+    this.x += v.x;
+    this.z += v.z;
+    this.s = Math.sqrt(this.x*this.x+this.z*this.z);
+    this.d = getDirection(this.x,this.z);
+}
+
+Impulse.prototype.sub = function(v) {
+    this.x -= v.x;
+    this.z -= v.z;
+    this.s = Math.sqrt(this.x*this.x+this.z*this.z);
+    this.d = getDirection(this.x,this.z);
+}
+
+Impulse.prototype.curl = function(c) {
+    this.d += c;
+    this.updateXZ();
+}
+
+Impulse.prototype.tick = function() {
+    this.moving = this.s>speedDecrement;
+    var rot = rotationDecrement2;
+    if (this.moving) {
+        var a = (this.s-speedDecrement)/this.s;
+        this.s *= a;
+        this.x *= a;
+        this.z *= a;
+        rot = rotationDecrement1;
+    }
+    if (this.r>=0) {
+        this.rotating = this.r>rot;
+        if (this.rotating) {
+            this.r -= rot;
+        }
+    } else {
+        this.rotating = this.r<-rot;
+        if (this.rotating) {
+            this.r += rot;
+        }
+    }
+}
+
+Impulse.prototype.text = function() {
+    return "["+this.x.toFixed(2)+","+this.z.toFixed(2)+"|"+this.s.toFixed(2)+"@"+(this.d*180/Math.PI).toFixed(0)+"]";
+}
+
+
+
+
+
+var stones = [];
+var curlDelta = 0; 
+var rotationTakeover = 0.4;
+var timestepMillis = 10;
+var timestep = Math.round(BABYLON.Tools.Now/timestepMillis)*timestepMillis;
+var restitution = 0.99;
+var penetrationCorrection = 0.2;
+
+var collisionCount = 0;
+
+function Stone(id,prototypeStone,prototypeHandle,prototypeShadow) {
+	stones[id] = this;
+    var that = this;
+	this.id = id; 
+	this.position = new BABYLON.Vector3(0,0.001*(id+1),0);
+    this.impulse = new Impulse();
+    this.visible = false;
+	
+    this.body = prototypeStone.createInstance("b"+id);
+	this.body.position = that.position;
+	
+	this.handle = prototypeHandle.createInstance("h"+id);
+	this.handle.position = that.position;
+	
+	this.shadow = prototypeShadow.createInstance("s"+id);
+	this.shadow.position = that.position;
+    
+    this.setVisible(false);
+}
+
+Stone.prototype.setPosition = function(x,z) {
+    this.position.x = x;
+    this.position.z = z;
+    this.position.y = 0.001*(this.id+1);
+    this.setVisible(true);
+}
+
+Stone.prototype.setVisible = function(value) {
+    this.visible = value;
+    this.handle.isVisible = value;
+    this.body.isVisible = value;
+    this.shadow.isVisible = value;
+  	this.removing = undefined;
+}        
+
+Stone.prototype.tick = function() {
+    if (!this.visible) return;
+    
+    // slow down rotation and adjust direction
+    this.impulse.tick();
+
+    if (this.impulse.rotating) {
+        this.handle.rotation.y += this.impulse.r;
+        this.body.rotation.y += this.impulse.r;
+    }
+
+    if (this.impulse.moving) {
+        this.position.x += this.impulse.x;
+        this.position.z += this.impulse.z;
+        
+        if (this.removing) return;
+    
+        // check for bounds
+        if (this.position.x<-7.5 // -dim.width/2 + diameterStone/2
+            ||this.position.x>7.5 // dim.width/2 - diameterStone/2
+            ||this.position.z<-6.5) { // -dim.diameter12/2
+    		this.removing = true;
+            this.remove(500);
+            return;
+        }
+        
+        // as we moved the stone we have to check for collisions
+        for (var otherId=0;otherId<stones.length;otherId++) {
+            if (otherId==this.id) continue;
+            var other = stones[otherId];
+            if (other.visible) {
+                var dx = other.position.x-this.position.x;
+                var dz = other.position.z-this.position.z;
+                var dSquare = dx*dx+dz*dz;
+                if (dSquare<=1) { // no need to do Math.sqrt now...
+                    collisionCount++;
+                    
+                    if (collisionCount==2) {
+                        console.log("XXX");
+                    }
+                    
+                    var dist = Math.sqrt(dSquare); // ... it's really needed.
+                    var penetration = 1-dist;
+                
+                    var direction = getDirection(dx,dz);
+                    var normal = new Impulse();
+                    normal.set(1,direction,0);
+                    
+                    // relative velocity
+                    var vel = new Impulse(other.impulse);
+                    vel.sub(this.impulse);
+
+                    var magnitude = vel.dotProduct(normal);
+			        normal.setSpeed(-magnitude*restitution);
+                    
+                    this.impulse.sub(normal);
+                    other.impulse.add(normal);
+                }
+            }
+        }
+    } 
+}
+
+Stone.prototype.push = function(s,d,r) {
+    this.impulse.set(s,d,r);
+}
+
+Stone.prototype.remove = function(millis) {
+    var stone = this;
+    stone.shadow.isVisible = false;
+    animate(millis,ease.quadIn,function(a) {
+        stone.handle.position.y = -a.progress
+        stone.body.position.y = -a.progress;
+        if (a.done) {
+            stone.setVisible(false);
+        }
+    });
+}
+
+function getDirection(dx,dz) {
+    if (dz==0) {
+        if (dx<0) {
+            return Math.PI/2;
+        } else {
+            return -Math.PI/2;
+        }
+    } else if (dz>0) {
+        return -Math.atan(dx/dz);
+    } else { // dz<0
+        if (dx>0) {
+            return -Math.PI-Math.atan(dx/dz);
+        } else {
+            return Math.PI-Math.atan(dx/dz);
+        }
+    }
+}
+    
+/*    
+function testDir(dx,dz,exp) {
+    console.log("  "+dx+"/"+dz+" -> "+getDirection(dx,dz).toFixed(2)+" ("+exp+")");
+}
+
+testDir(     0,     -1,  3.14);    
+testDir(-0.707, -0.707,  2.36);    
+testDir(    -1,      0,  1.57);    
+testDir(-0.707,  0.707,  0.79);    
+testDir(     0,      1,  0   );    
+testDir( 0.707,  0.707, -0.79);    
+testDir(     1,      0, -1.57);    
+testDir( 0.707, -0.707, -2.36);    
+*/
+    
+    
+    
+    
