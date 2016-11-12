@@ -174,3 +174,10 @@ div.sbTotal {
 	width: 48px;
 	height: 48px;
 }
+
+.draw-fab {
+	position: absolute;
+	top: 148px;
+	left: 48px;
+}
+

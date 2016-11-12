@@ -1,7 +1,7 @@
 
 echo off
 set ANGULAR="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.3"
-set ANGULAR_MATERIAL="http://ajax.googleapis.com/ajax/libs/angular_material/1.0.7"
+set ANGULAR_MATERIAL="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.1"
 set ANGULAR_MATERIAL_ICONS="http://cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.0"
 set PEP="https://code.jquery.com/pep/0.4.1"
 set BABYLON="http://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.4.1"

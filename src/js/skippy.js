@@ -48,7 +48,7 @@ scene.clearColor = new BABYLON.Color3(0.6, 0.6, 0.9);
 var cameraPos = new BABYLON.Vector3(0,dim.man,0);
 var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI/2, 1.3, 20, cameraPos, scene);
 
-camera.upperBetaLimit = 1.57;
+camera.upperBetaLimit = 1.52;
 camera.lowerRadiusLimit = 2;
 camera.setTarget(new BABYLON.Vector3(0,0,0));
 camera.attachControl(canvas);
@@ -56,7 +56,9 @@ camera.attachControl(canvas);
 
 var assetsManager = new BABYLON.AssetsManager(scene);
 
-var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 100, -100), scene);
+var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1,0), scene);
+//light.diffuse = new BABYLON.Color3(1, 1, 1);
+light.specular = new BABYLON.Color3(0.3, 0.3, 0.3);
 
 var rinkT = BABYLON.Mesh.CreateGround("rinkT", dim.width, 40, 0, scene);
 rinkT.material = new BABYLON.StandardMaterial("rinkT", scene);
@@ -263,7 +265,6 @@ function selectHandle(on,off) {
 	off.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
 	off.visibility = 0.2;
     drawHandle = (on==targetLeft)?-1:1;
-            
 }
 
 assetsManager.onFinish = function (tasks) {
@@ -343,7 +344,7 @@ var currentStoneId = 0;
 
 function draw() {
     var speed = speedmap(drawLength);
-    var direction = Math.PI+Math.atan(-targetPos.x/(dim.hackD-targetPos.z));
+    var direction = Math.atan(targetPos.x/(dim.hackD-targetPos.z));
     var rotation = skills.rotation*drawHandle;
 	
     speed = gauss(skills.deviate.speed,speed);
@@ -351,9 +352,8 @@ function draw() {
     rotation = gauss(skills.deviate.rotation,rotation);
     
     // for testing
-    speed = .06; // feed/timestep
-    direction = Math.PI-Math.atan(-targetPos.x/(stones[currentStoneId].position.z-targetPos.z));
-    //direction = Math.PI;
+    speed = .06; 
+    direction = Math.atan(targetPos.x/(stones[currentStoneId].position.z-targetPos.z));
     
     console.log("DRAW: handle="+drawHandle+" len="+drawLength+" ->  dir="+direction+" speed="+speed+" rotation="+rotation);
 
@@ -361,8 +361,8 @@ function draw() {
     
     animate(100,ease.cubicOut,function(a) {
         if (a.init) {
-            a.tl = targetLeft.visiblity;
-            a.tr = targetRight.visiblity;
+            a.tl = targetLeft.visibility;
+            a.tr = targetRight.visibility;
             a.tb = targetBroom.visibility;
         } else {
             var v = 1-a.progress;
@@ -370,12 +370,12 @@ function draw() {
             targetRight.visibility = a.tr*v;
             targetBroom.visibility = a.tb*v;
             if (a.done) {
-                targetLeft.isVisible = false;
-                targetRight.isVisible = false;
-                targetBroom.isVisible = false;
                 targetLeft.visibility = a.tl;
                 targetRight.visibility = a.tr;
                 targetBroom.visibility = a.tb;
+                targetLeft.isVisible = false;
+                targetRight.isVisible = false;
+                targetBroom.isVisible = false;
             }
         }
     });
@@ -388,38 +388,13 @@ function startup() {
     targetRight.isVisible = true;
     targetBroom.isVisible = true;
    
-    
+    for (var i=0;i<stones.length;i++) {
+        stones[i].reset();
+    }
+  
  	/* OK */
     stones[0].setPosition(0,8/*dim.hackD*/);
 	stones[1].setPosition(1.414/2,-1.414/4);
-    
-  //  stones[2].setPosition(-2,-1.5);
-  //  stones[3].setPosition(-4,0);
-  
-    //    stones[2].setPosition(1.1,dim.teeT);
-    //    stones[3].setPosition(0,-3);
-	
-    // stones[2].setPosition(-0.5,dim.hogT);
-	//stones[2].push(Math.PI/*dir*/,3.0/*fps*/,0.1);
-	
-	/* WRONG 
-	stones[0].setPosition(2,dim.tee2);
-	stones[0].push(-Math.PI/2,1.2,0.08);
-	stones[1].setPosition(0,dim.tee2-.5);
-	*/
-	
-	/* OK
-	stones[0].setPosition(2,dim.tee2);
-	stones[0].push(-Math.PI/2,1.2,0.08);
-	stones[1].setPosition(0,dim.tee2+.5);
-	*/
-
-	/* WRONG
-	stones[0].setPosition(2,dim.tee2);
-	stones[0].push(-Math.PI/2,1.2,0.08);
-	stones[1].setPosition(-2,dim.tee2);
-	stones[1].push(Math.PI/2,1.2,0.08);
-	*/
 }
 
 
@@ -431,8 +406,7 @@ function testDraw() {
     targetBroom.isVisible = false;
     
     for (var i=0;i<stones.length;i++) {
-        stones[i].setVisible(false);
-        stones[i].impulse = new Impulse();
+        stones[i].reset();
     }
  
     speedDecrement = 0.00001; 
@@ -448,7 +422,7 @@ function testDraw() {
     stones[6].setPosition(x*-3,4);
     stones[7].setPosition(x*1.5,3.5);
     
-    stones[currentStoneId].push(0.2,Math.PI,skills.rotation);
+    stones[currentStoneId].push(0.2,0,skills.rotation);
     
 }
     
@@ -562,8 +536,8 @@ Impulse.prototype.reset = function() {
 }
 
 Impulse.prototype.updateXZ = function() {
-    this.x = -Math.sin(this.d)*this.s;
-    this.z = Math.cos(this.d)*this.s;
+    this.x = Math.sin(this.d)*this.s;
+    this.z = -Math.cos(this.d)*this.s;
 }
     
 Impulse.prototype.set = function(s,d,r) {
@@ -646,16 +620,13 @@ var timestep = Math.round(BABYLON.Tools.Now/timestepMillis)*timestepMillis;
 var restitution = 0.99;
 var penetrationCorrection = 0.2;
 
-var collisionCount = 0;
-
 function Stone(id,prototypeStone,prototypeHandle,prototypeShadow) {
 	stones[id] = this;
     var that = this;
 	this.id = id; 
 	this.position = new BABYLON.Vector3(0,0.001*(id+1),0);
     this.impulse = new Impulse();
-    this.visible = false;
-	
+    
     this.body = prototypeStone.createInstance("b"+id);
 	this.body.position = that.position;
 	
@@ -665,7 +636,12 @@ function Stone(id,prototypeStone,prototypeHandle,prototypeShadow) {
 	this.shadow = prototypeShadow.createInstance("s"+id);
 	this.shadow.position = that.position;
     
-    this.setVisible(false);
+    this.reset();
+}
+
+Stone.prototype.reset = function() {
+	this.impulse.reset();
+	this.setVisible(false);
 }
 
 Stone.prototype.setPosition = function(x,z) {
@@ -680,7 +656,6 @@ Stone.prototype.setVisible = function(value) {
     this.handle.isVisible = value;
     this.body.isVisible = value;
     this.shadow.isVisible = value;
-  	this.removing = undefined;
 }        
 
 Stone.prototype.tick = function() {
@@ -698,17 +673,15 @@ Stone.prototype.tick = function() {
         this.position.x += this.impulse.x;
         this.position.z += this.impulse.z;
         
-        if (this.removing) return;
-    
         // check for bounds
         if (this.position.x<-7.5 // -dim.width/2 + diameterStone/2
             ||this.position.x>7.5 // dim.width/2 - diameterStone/2
-            ||this.position.z<-6.5) { // -dim.diameter12/2
-    		this.removing = true;
-            this.remove(500);
+       	    ||this.position.z<-6.5) { // -dim.diameter12/2
+			this.visible = false;
+            this.remove(200);
             return;
         }
-        
+             
         // as we moved the stone we have to check for collisions
         for (var otherId=0;otherId<stones.length;otherId++) {
             if (otherId==this.id) continue;
@@ -718,12 +691,6 @@ Stone.prototype.tick = function() {
                 var dz = other.position.z-this.position.z;
                 var dSquare = dx*dx+dz*dz;
                 if (dSquare<=1) { // no need to do Math.sqrt now...
-                    collisionCount++;
-                    
-                    if (collisionCount==2) {
-                        console.log("XXX");
-                    }
-                    
                     var dist = Math.sqrt(dSquare); // ... it's really needed.
                     var penetration = 1-dist;
                 
@@ -765,36 +732,38 @@ Stone.prototype.remove = function(millis) {
 function getDirection(dx,dz) {
     if (dz==0) {
         if (dx<0) {
-            return Math.PI/2;
-        } else {
             return -Math.PI/2;
+        } else {
+            return Math.PI/2;
         }
     } else if (dz>0) {
-        return -Math.atan(dx/dz);
-    } else { // dz<0
-        if (dx>0) {
-            return -Math.PI-Math.atan(dx/dz);
-        } else {
-            return Math.PI-Math.atan(dx/dz);
+        if (dx<0) {
+        	return Math.atan(-dx/dz)-Math.PI;
+        } else {     
+       	    return Math.atan(-dx/dz)+Math.PI;
         }
+    } else { // dz<0
+        return -Math.atan(dx/dz);
     }
 }
     
-/*    
-function testDir(dx,dz,exp) {
-    console.log("  "+dx+"/"+dz+" -> "+getDirection(dx,dz).toFixed(2)+" ("+exp+")");
+  
+function testDir(id,dx,dz,exp) {
+	var v = getDirection(dx,dz);
+    console.log("  "+id+": "+dx+"/"+dz+" -> "+v.toFixed(2)+" ("+exp+") = "+(Math.abs(exp-v)<0.1?"ok":"ERROR"));
 }
 
-testDir(     0,     -1,  3.14);    
-testDir(-0.707, -0.707,  2.36);    
-testDir(    -1,      0,  1.57);    
-testDir(-0.707,  0.707,  0.79);    
-testDir(     0,      1,  0   );    
-testDir( 0.707,  0.707, -0.79);    
-testDir(     1,      0, -1.57);    
-testDir( 0.707, -0.707, -2.36);    
-*/
-    
+function testDirs() {
+testDir(1,     0,     -1,  0   );    
+testDir(2,-0.707, -0.707, -0.79);    
+testDir(3,    -1,      0, -1.57);    
+testDir(4,-0.707,  0.707, -2.36);    
+testDir(5,     0,      1,  3.14);    
+testDir(6, 0.707,  0.707,  2.36);    
+testDir(7,     1,      0,  1.57);    
+testDir(8, 0.707, -0.707,  0.79);    
+}
+ 
     
     
     
