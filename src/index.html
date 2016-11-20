@@ -10,32 +10,58 @@
   <link rel="stylesheet" href="css/angular-material.min.css">
   <title>skippy</title>
  </head>
- <body ng-app="skippy" ng-controller="ctrl" layout="column" >
+ <body ng-app="skippy" ng-controller="ctrl" layout="column" style="height:100%">
   <div id="splash">
    <img src="images/spinner.png"></img>
    <div>loading...</div>
   </div>
-   
-  <md-toolbar>
-   <div class="md-toolbar-tools">
-   
-    <md-button xclass="draw-menu-button" aria-label="draw" ng-click="testDraw()">T</md-button>
-	<md-button xclass="draw-menu-button" aria-label="draw" ng-click="startup()">R</md-button>
 
-    <md-menu md-offset="-8 48">
-     <md-button class="draw-menu-button" aria-label="draw" ng-click="draw()" ng-click="$mdOpenMenu($event)" >
-      <md-icon class="draw-icon" md-svg-src="images/curling_draw.svg"> </md-icon>
-     </md-button>
-     <md-menu-content class="draw-menu">
-      <div class="draw-weight" weight-selector></div>
-      <md-button class="md-primary md-raised" aria-label="?" ng-click="draw()">
-       <md-icon md-svg-src="images/curling_stone_moving.svg"> </md-icon>
+  <canvas id="renderCanvas" touch-action="auto"></canvas>
+ 
+  <md-button id="drawButton" class="md-fab" aria-label="?" ng-click="toggleDraw()">
+   <md-icon ng-md-icon icon="{{drawOpen?'curling_stone_moving':'curling_stone'}}" options='{"duration":900, "rotation":"none"}' size="32" style="width:32px; height:32px" ></md-icon>
+  </md-button>
+ 
+  <md-fab-speed-dial id="settingsFab" class="md-scale" md-direction="up" md-open="settingsOpen">
+    <md-fab-trigger>
+      <md-button id="settingsButton" class="md-fab" aria-label="?">
+        <md-icon ng-md-icon icon="settings"></md-icon>
       </md-button>
-     </md-menu-content>
-    </md-menu>
-    
-    <span flex></span>
-    <div class="sbMain">
+    </md-fab-trigger>
+    <md-fab-actions>
+      <md-button id="skillsButton" class="md-fab md-mini" aria-label="?" ng-click="open('skills')">
+        <md-icon ng-md-icon icon="curling_draw"></md-icon>
+      </md-button>
+      <md-button id="scoreButton" class="md-fab md-mini" aria-label="?" ng-click="open('score')">
+        <md-icon ng-md-icon icon="curling_draw"></md-icon>
+      </md-button>
+    </md-fab-actions>
+  </md-fab-speed-dial>
+ 
+  <md-sidenav md-component-id="draw" class="md-sidenav-left" md-is-open="drawOpen">
+    <div id="drawWeight" weight-selector></div>
+  </md-sidenav>
+ 
+<!--
+ 
+  <md-button class="md-fab draw-fab" style="position:absolute; bottom:0px; left:5px"
+  ng-click="toggleSidenav('draw')" >
+     <md-icon md-svg-src="images/curling_stone_moving2.svg" style="width:40px"> </md-icon>
+   </md-button>
+ 
+  <md-sidenav
+        class="md-sidenav-left"
+        md-component-id="draw"
+        xxmd-whiteframe="4">
+	<md-button class="md-fab draw-fab" style="position:absolute; bottom:0px; left:5px"
+		ng-click="draw()" >
+      <md-icon md-svg-src="images/curling_draw.svg" style="width:40px"> </md-icon>
+    </md-button>
+
+   	<div class="draw-weight" weight-selector></div>
+
+   </md-sidenav>
+  <div class="sbMain" style="position:absolute; top:10px; right:10px;">
      <div layout="row" flex>
       <div class="sHeader sHeaderName">TEAM</div>
       <div class="sHeader sHammer">H</div>
@@ -55,37 +81,16 @@
       <div class="sbCell sbTotal">{{}}</div>
      </div>
     </div>
-    <span flex></span>
-    <md-button class="md-icon-button" aria-label="Settings" ng-disabled="true">
-     <ng-md-icon icon="settings" aria-label="settings" ng-click="toggle('right')" ></ng-md-icon>
-    </md-button>
-   </div>
-  </md-toolbar>
- 
-  <md-content style="position:relative">
-   <canvas id="renderCanvas" touch-action="auto"></canvas>
-   
-   <md-button class="md-fab draw-fab" >
-   <md-icon md-svg-src="images/curling_stone_moving.svg"> </md-icon>
-   </md-button>
-   
-   <md-sidenav class="md-sidenav-right" md-component-id="right" md-whiteframe="4">
-    <md-toolbar class="md-theme-indigo">
-     <h1 class="md-toolbar-tools">Right</h1>
-    </md-toolbar>
-    <md-button ng-click="close('right')" class="md-primary">Close</md-button>
-   </md-sidenav> 
-   
-  </md-content> 
- 
-  <script src="js/angular.min.js"></script>
-  <script src="js/angular-animate.min.js"></script>
-  <script src="js/angular-aria.min.js"></script>
-  <script src="js/angular-messages.min.js"></script>
-  <script src="js/angular-material.min.js"></script>
-  <script src="js/angular-material-icons.min.js"></script> 
-  <script src="js/pep.min.js"></script>
-  <script src="js/babylon.max.js"></script>
+   -->
+  <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.4.1/babylon.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular-animate.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular-aria.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-messages/1.5.8/angular-messages.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.1/angular-material.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material-icons/0.7.1/angular-material-icons.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/SVG-Morpheus/0.3.2/svg-morpheus.js"></script> 
   <script src="js/spline.js"></script>
   <script src="js/ease.js"></script>
   <script src="js/skippy.js"></script>
