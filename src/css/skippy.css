@@ -54,15 +54,6 @@ html, body {
 }
 
 
-md-content {
-    position: relative;
-    margin: 0;
-    height: 100%;
-    width: 100%;
-    padding: 0 !important;
-    overflow: hidden !important;
-}
-
 .sbMain {
 	
 }
@@ -119,63 +110,22 @@ div.sbTotal {
 	min-height: 12px;
 }
 
-.md-toolbar-tools {
-	fill: #fff;
-	padding-left: 0 !important;
-}
-
-.draw-menu-button {
-	padding-left: 0 !important;
-}
-
-.draw-menu {
-	max-height: 100%;
-	padding: 0;
-}
-
-.draw-weight {
-    background-image: url(../images/draw_area.svg);
-    background-size: cover;
-    height: 250px;
-    min-height: 250px;
-    max-height: 250px;
-    width: 120px;
-    padding: 0; 
-    padding-bottom: 100%;
-    position: relative;
-}
-
-.draw-menu button {
-    margin: 0;
-    border-radius: 0;
-}
-    
-.draw-menu md-icon {
-	width: 56px;
-    height: 48px;
-    fill: white;
-}
-
-.draw-menu .weightBar {
-	height: 10px;
+.weightBar {
+	height: 6%;
 	width: 100%;
 	position: absolute;
 	left: 0;
-	background-color: yellow;
+	background-color: #ffff60;
 	filter: blur(5px);
 	-webkit-filter: blur(5px);
 	-moz-filter: blur(5px);
 	-o-filter: blur(5px);
 	-ms-filter: blur(5px);
+    opacity: 0.8;
 }
 
-.draw-icon {
-	fill: white;
-	width: 48px;
-	height: 48px;
-}
 
-.draw-fab {
+.drawButton {
 	position: absolute;
 	bottom: 5px;
 	left: 5px;
@@ -212,5 +162,5 @@ div.sbTotal {
 }
 
 .md-sidenav-left {
-	width: 220px;
+	width: 20%;
 }

@@ -7,7 +7,7 @@
   <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="stylesheet" href="css/skippy.css">
-  <link rel="stylesheet" href="css/angular-material.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.1/angular-material.min.css">
   <title>skippy</title>
  </head>
  <body ng-app="skippy" ng-controller="ctrl" layout="column" style="height:100%">
@@ -18,22 +18,22 @@
 
   <canvas id="renderCanvas" touch-action="auto"></canvas>
  
-  <md-button id="drawButton" class="md-fab" aria-label="?" ng-click="toggleDraw()">
+  <md-button id="drawButton" class="md-fab" aria-label="?" ng-click="toggleDraw()" ng-show="game.state=='ready'">
    <md-icon ng-md-icon icon="{{drawOpen?'curling_stone_moving':'curling_stone'}}" options='{"duration":900, "rotation":"none"}' size="32" style="width:32px; height:32px" ></md-icon>
   </md-button>
  
-  <md-fab-speed-dial id="settingsFab" class="md-scale" md-direction="up" md-open="settingsOpen">
+  <md-fab-speed-dial id="settingsFab" class="md-scale" md-direction="up" md-open="settingsOpen" ng-hide="game.state=='drawing'">
     <md-fab-trigger>
       <md-button id="settingsButton" class="md-fab" aria-label="?">
         <md-icon ng-md-icon icon="settings"></md-icon>
       </md-button>
     </md-fab-trigger>
     <md-fab-actions>
-      <md-button id="skillsButton" class="md-fab md-mini" aria-label="?" ng-click="open('skills')">
+      <md-button id="skillsButton" class="md-fab md-mini" aria-label="?" ng-click="settings('skills')">
         <md-icon ng-md-icon icon="curling_draw"></md-icon>
       </md-button>
-      <md-button id="scoreButton" class="md-fab md-mini" aria-label="?" ng-click="open('score')">
-        <md-icon ng-md-icon icon="curling_draw"></md-icon>
+      <md-button id="scoreButton" class="md-fab md-mini" aria-label="?" ng-click="settings('home')">
+        <md-icon ng-md-icon icon="home"></md-icon>
       </md-button>
     </md-fab-actions>
   </md-fab-speed-dial>
@@ -43,25 +43,7 @@
   </md-sidenav>
  
 <!--
- 
-  <md-button class="md-fab draw-fab" style="position:absolute; bottom:0px; left:5px"
-  ng-click="toggleSidenav('draw')" >
-     <md-icon md-svg-src="images/curling_stone_moving2.svg" style="width:40px"> </md-icon>
-   </md-button>
- 
-  <md-sidenav
-        class="md-sidenav-left"
-        md-component-id="draw"
-        xxmd-whiteframe="4">
-	<md-button class="md-fab draw-fab" style="position:absolute; bottom:0px; left:5px"
-		ng-click="draw()" >
-      <md-icon md-svg-src="images/curling_draw.svg" style="width:40px"> </md-icon>
-    </md-button>
-
-   	<div class="draw-weight" weight-selector></div>
-
-   </md-sidenav>
-  <div class="sbMain" style="position:absolute; top:10px; right:10px;">
+    <div class="sbMain" style="position:absolute; top:10px; right:10px;">
      <div layout="row" flex>
       <div class="sHeader sHeaderName">TEAM</div>
       <div class="sHeader sHammer">H</div>
@@ -81,9 +63,10 @@
       <div class="sbCell sbTotal">{{}}</div>
      </div>
     </div>
-   -->
+-->
+
   <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.4.1/babylon.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.4.1/babylon.max.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular-animate.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular-aria.min.js"></script>
