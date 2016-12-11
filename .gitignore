@@ -1,1 +1,2 @@
-miniweb.exe
+node_modules/
+build/

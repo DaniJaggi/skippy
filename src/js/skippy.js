@@ -114,7 +114,7 @@ assetsManager.addTextureTask("", rinkPath+"1.png").onSuccess = function(task) {
 
 // http://cpetry.github.io/NormalMap-Online/
 // pebbled.jpg,  strength: 0.15, level:7.8
-assetsManager.addTextureTask("","images/pebbledBump.png").onSuccess = function(task) {
+assetsManager.addTextureTask("","images/pebbles_bump.png").onSuccess = function(task) {
 	task.texture.uScale = 8.0;
     task.texture.vScale = 20.0;
 	task.texture.level = .5;
